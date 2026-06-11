@@ -1,0 +1,177 @@
+# ========================================
+# 🧠 Franz API - Modern Build/Test + Container Pipeline
+# ========================================
+# ✅ Linux-first (runtime parity with containers)
+# ✅ dotnet CLI (SDK-native, deterministic)
+# ✅ Unit tests by default
+# ✅ Optional Integration stage (TestContainers-ready)
+# ✅ Optional Docker build/push stage
+# ========================================
+
+trigger:
+  branches:
+    include:
+      - Develop
+pr: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  artifactName: 'drop'
+
+  # ---- toggles (set at queue time) ----
+  runIntegration: 'false'
+  buildContainer: 'false'
+  pushContainer: 'false'
+
+  # ---- container metadata (adjust to your registry layout) ----
+  imageRepository: 'franz/franz.api'
+  imageTag: '$(Build.SourceVersion)'
+
+stages:
+- stage: BuildAndUnitTest
+  displayName: "🛠️ Build & Unit Tests"
+  jobs:
+  - job: BuildTest
+    displayName: "🔨 Restore/Build/Test"
+    steps:
+
+    - task: UseDotNet@2
+      displayName: "🔧 Install .NET SDK"
+      inputs:
+        packageType: 'sdk'
+        version: '10.x'
+        includePreviewVersions: true
+
+    # NuGet cache (Linux path)
+    - task: Cache@2
+      displayName: "⚡ Cache NuGet Packages"
+      inputs:
+        key: |
+          nuget | "$(Agent.OS)" | nuget.config
+        restoreKeys: |
+          nuget | "$(Agent.OS)"
+        path: $(HOME)/.nuget/packages
+
+    # Authenticate to Azure Artifacts (if you use it)
+    - task: NuGetAuthenticate@1
+      displayName: "🔐 Authenticate to feeds"
+
+    - script: |
+        dotnet --info
+        dotnet restore --configfile nuget.config
+      displayName: "📦 Restore"
+
+    - script: |
+        dotnet build --configuration $(buildConfiguration) --no-restore
+      displayName: "🏗️ Build"
+
+    # Unit tests: filter out Integration by category/trait
+    - script: |
+        dotnet test \
+          --configuration $(buildConfiguration) \
+          --no-build \
+          --filter "TestCategory!=Integration" \
+          --collect:"XPlat Code Coverage" \
+          --results-directory "$(Agent.TempDirectory)/TestResults"
+      displayName: "🧪 Unit Tests (skip Integration)"
+
+    - task: PublishTestResults@2
+      displayName: "📊 Publish Test Results"
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFormat: 'VSTest'
+        testResultsFiles: '$(Agent.TempDirectory)/TestResults/**/*.trx'
+        mergeTestResults: true
+        failTaskOnFailedTests: true
+
+    # Build output artifact (useful for template validation / debugging)
+    - task: CopyFiles@2
+      displayName: "📂 Collect Outputs"
+      inputs:
+        SourceFolder: '$(Build.SourcesDirectory)'
+        Contents: |
+          **/bin/$(buildConfiguration)/**
+          **/obj/$(buildConfiguration)/**/project.assets.json
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+    - task: PublishBuildArtifacts@1
+      displayName: "🚀 Publish Artifacts"
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: '$(artifactName)'
+        publishLocation: 'Container'
+
+
+- stage: IntegrationTests
+  displayName: "🧪 Integration Tests (Optional)"
+  dependsOn: BuildAndUnitTest
+  condition: and(succeeded(), eq(variables['runIntegration'], 'true'))
+  jobs:
+  - job: Integration
+    displayName: "🧪 Run Integration Suite"
+    steps:
+    - task: UseDotNet@2
+      displayName: "🔧 Install .NET SDK"
+      inputs:
+        packageType: 'sdk'
+        version: '10.x'
+        includePreviewVersions: true
+
+    - task: NuGetAuthenticate@1
+      displayName: "🔐 Authenticate to feeds"
+
+    - script: |
+        dotnet restore --configfile nuget.config
+        dotnet test \
+          --configuration $(buildConfiguration) \
+          --filter "TestCategory=Integration" \
+          --results-directory "$(Agent.TempDirectory)/IntegrationResults"
+      displayName: "🧪 Integration Tests"
+
+    - task: PublishTestResults@2
+      displayName: "📊 Publish Integration Results"
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFormat: 'VSTest'
+        testResultsFiles: '$(Agent.TempDirectory)/IntegrationResults/**/*.trx'
+        mergeTestResults: true
+        failTaskOnFailedTests: true
+
+
+- stage: Container
+  displayName: "🐳 Container Build/Push (Optional)"
+  dependsOn: BuildAndUnitTest
+  condition: and(succeeded(), eq(variables['buildContainer'], 'true'))
+  jobs:
+  - job: DockerBuild
+    displayName: "🐳 Build (and optionally Push) Image"
+    steps:
+    - script: |
+        echo "Building image: $(imageRepository):$(imageTag)"
+      displayName: "ℹ️ Image Info"
+
+    # This assumes your repo has a Dockerfile at the root.
+    - task: Docker@2
+      displayName: "🐳 Docker Build"
+      inputs:
+        command: 'build'
+        Dockerfile: 'Dockerfile'
+        buildContext: '.'
+        repository: '$(imageRepository)'
+        tags: |
+          $(imageTag)
+
+    # Push is optional and requires a service connection (Docker registry / ACR)
+    - task: Docker@2
+      displayName: "🚢 Docker Push"
+      condition: and(succeeded(), eq(variables['pushContainer'], 'true'))
+      inputs:
+        command: 'push'
+        repository: '$(imageRepository)'
+        tags: |
+          $(imageTag)
+        # You must set this to your service connection name in Azure DevOps:
+        # containerRegistry: 'YOUR_REGISTRY_SERVICE_CONNECTION'

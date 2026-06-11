@@ -1,0 +1,108 @@
+name: "🏗️ Terraform Apply with Conditional Kafka/RabbitMQ Checks"
+
+on:
+  workflow_dispatch:
+    inputs:
+      awsRegion:
+        description: "AWS Region"
+        required: true
+        default: "us-east-1"
+        type: string
+
+      kafkaClusterName:
+        description: "Kafka Cluster Name"
+        required: true
+        default: "KafkaHub"
+        type: string
+
+      rabbitBrokerName:
+        description: "RabbitMQ Broker Name"
+        required: true
+        default: "RabbitHub"
+        type: string
+
+jobs:
+  terraform-apply:
+    name: "Terraform Apply"
+    runs-on: ubuntu-latest
+    environment:
+      name: infra   # ✅ Optional: protect environment with manual approval
+
+    env:
+      AWS_REGION: ${{ github.event.inputs.awsRegion }}
+      KAFKA_CLUSTER_NAME: ${{ github.event.inputs.kafkaClusterName }}
+      RABBITMQ_BROKER_NAME: ${{ github.event.inputs.rabbitBrokerName }}
+      TF_WORKING_DIR: "infra/aws"
+
+    steps:
+      # -------------------------------
+      # ✅ Checkout repository
+      # -------------------------------
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+
+      # -------------------------------
+      # ✅ Configure AWS credentials
+      # -------------------------------
+      - name: "Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # -------------------------------
+      # ✅ Check if Kafka Hub already exists
+      # -------------------------------
+      - name: "Check if Kafka Hub Exists"
+        id: check-kafka
+        run: |
+          echo "🔎 Checking if Kafka Hub already exists..."
+          EXISTING_KAFKA=$(aws kafka list-clusters \
+            --region "${AWS_REGION}" \
+            --query "ClusterInfoList[?ClusterName=='${KAFKA_CLUSTER_NAME}'].ClusterName" \
+            --output text)
+
+          if [ -n "$EXISTING_KAFKA" ]; then
+            echo "✅ Kafka Hub already exists: $EXISTING_KAFKA"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "ℹ️ Kafka Hub does not exist. It will be created."
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      # -------------------------------
+      # ✅ Check if RabbitMQ broker already exists
+      # -------------------------------
+      - name: "Check if RabbitMQ Broker Exists"
+        id: check-rabbit
+        run: |
+          echo "🔎 Checking if RabbitMQ broker already exists..."
+          EXISTING_RABBIT=$(aws mq list-brokers \
+            --region "${AWS_REGION}" \
+            --query "BrokerSummaries[?BrokerName=='${RABBITMQ_BROKER_NAME}'].BrokerName" \
+            --output text)
+
+          if [ -n "$EXISTING_RABBIT" ]; then
+            echo "✅ RabbitMQ broker already exists: $EXISTING_RABBIT"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "ℹ️ RabbitMQ broker does not exist. It will be created."
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      # -------------------------------
+      # ✅ Conditional Terraform Apply
+      # -------------------------------
+      - name: "Terraform Apply"
+        if: ${{ steps.check-kafka.outputs.exists == 'false' || steps.check-rabbit.outputs.exists == 'false' }}
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          echo "🚀 Running terraform apply..."
+          terraform init
+          terraform apply -auto-approve tfplan
+
+      - name: "Skip Apply (All Brokers Exist)"
+        if: ${{ steps.check-kafka.outputs.exists == 'true' && steps.check-rabbit.outputs.exists == 'true' }}
+        run: |
+          echo "⏩ Skipping terraform apply — Kafka and RabbitMQ already exist."

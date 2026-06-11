@@ -1,0 +1,37 @@
+parameters:
+  serviceName: ""
+  imageTag: ""        # ✅ Pass image tag from build pipeline
+  awsRegion: "$(AWS_REGION)"
+  clusterName: "$(EKS_CLUSTER_NAME)"
+  awsEcrUrl: "$(AWS_ECR_URL)"  # ✅ Your ECR URL passed from pipeline vars
+
+steps:
+  # ----------------------------
+  # ✅ Configure AWS credentials
+  # ----------------------------
+  - task: AWSCLI@1
+    displayName: "Configure AWS credentials"
+    inputs:
+      awsCredentials: "AWS_Service_Connection"   # 🔑 Use an Azure DevOps service connection if available
+      regionName: ${{ parameters.awsRegion }}
+
+  # ----------------------------
+  # ✅ Update kubeconfig
+  # ----------------------------
+  - script: |
+      echo "🔑 Authenticating to EKS cluster: ${{ parameters.clusterName }}..."
+      aws eks update-kubeconfig --region ${{ parameters.awsRegion }} --name ${{ parameters.clusterName }}
+    displayName: "Update kubeconfig for EKS"
+
+  # ----------------------------
+  # ✅ Deploy new image
+  # ----------------------------
+  - script: |
+      echo "🚀 Deploying service ${{ parameters.serviceName }} with image: ${{ parameters.awsEcrUrl }}/${{ parameters.serviceName }}:${{ parameters.imageTag }}"
+      
+      kubectl set image deployment/${{ parameters.serviceName }} \
+        ${{ parameters.serviceName }}=${{ parameters.awsEcrUrl }}/${{ parameters.serviceName }}:${{ parameters.imageTag }}
+
+      echo "⏳ Waiting for rollout..."
+      kubectl rollout status deployment/${{ parameters.serviceName }} --timeout=120s
+    displayName: "Deploy to EKS"

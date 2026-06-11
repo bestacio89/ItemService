@@ -1,0 +1,49 @@
+version: 0.2
+
+env:
+  variables:
+    BUILD_CONFIGURATION: "Release"
+
+phases:
+  install:
+    runtime-versions:
+      dotnet: 6.0
+    commands:
+      - echo "🔧 Ensuring latest .NET SDK and NuGet CLI..."
+      - dotnet --info
+      - dotnet tool install --global NuGet.CommandLine
+      - export PATH="$PATH:/root/.dotnet/tools"
+
+  pre_build:
+    commands:
+      - echo "📦 Restoring NuGet packages..."
+      - dotnet restore
+
+  build:
+    commands:
+      - echo "🏗️ Building .NET solution..."
+      - dotnet build --configuration $BUILD_CONFIGURATION --no-restore
+
+  post_build:
+    commands:
+      - echo "🧪 Running tests..."
+      # Run all tests but skip docker-compose project
+      - dotnet test --configuration $BUILD_CONFIGURATION --no-build --logger "trx;LogFileName=TestResults.trx"
+
+      # Optional: convert TRX → JUnit if your CI supports JUnit
+      - dotnet tool install --global trx2junit
+      - export PATH="$PATH:/root/.dotnet/tools"
+      - trx2junit TestResults.trx || true
+
+artifacts:
+  files:
+    - "**/bin/$BUILD_CONFIGURATION/**/*.dll"
+    - "**/bin/$BUILD_CONFIGURATION/**/*.exe"
+    - "**/bin/$BUILD_CONFIGURATION/**/*.pdb"
+    - "TestResults.trx"
+    - "TestResults.xml"
+  discard-paths: yes
+
+cache:
+  paths:
+    - "/root/.nuget/packages/**/*"

@@ -1,0 +1,30 @@
+jobs:
+- job: terraform-plan
+  displayName: "Terraform Plan"
+  dependsOn: terraform-init
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+    - checkout: self
+
+    - script: |
+        echo "Running Terraform Plan for environment: $(environment)"
+
+        # Safety: init in case previous job skipped
+        terraform init -input=false
+
+        # Generate plan
+        terraform plan \
+          -var-file="terraform-$(environment).tfvars" \
+          -out=tfplan \
+          -input=false
+
+        # Export JSON for traceability
+        terraform show -json tfplan > tfplan.json
+      displayName: "Generate Terraform Plan"
+
+    - publish: $(System.DefaultWorkingDirectory)/Terraform-GCP/tfplan
+      artifact: terraform-plan
+    - publish: $(System.DefaultWorkingDirectory)/Terraform-GCP/tfplan.json
+      artifact: terraform-plan-json

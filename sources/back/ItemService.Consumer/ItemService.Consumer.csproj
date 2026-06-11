@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="../../../common.targets" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>..\..\..</DockerfileContext>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="appsettings.development.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Franz.Common.Hosting"/>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets"/>
+	  <PackageReference Include="Microsoft.Extensions.Hosting" />
+	  <PackageReference Include="Franz.Common.Messaging.Bootstrap"/>
+	  <PackageReference Include="Franz.Common.Messaging.EntityFramework"/>
+	  <PackageReference Include="Franz.Common.Messaging.KafKa"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ItemService.Application\ItemService.Application.csproj" />
+    <ProjectReference Include="..\ItemService.Persistence\ItemService.Persistence.csproj" />
+  </ItemGroup>
+</Project>
+
+
+

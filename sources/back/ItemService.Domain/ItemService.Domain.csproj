@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<Import Project="../../../common.targets" />
+
+	<ItemGroup>
+	  <PackageReference Include="Franz.Common.Business" />
+	
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Registration\" />
+	</ItemGroup>
+
+</Project>
+
+
+

@@ -1,0 +1,46 @@
+name: "Terraform Plan"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Deployment Environment"
+        required: true
+        type: string
+
+jobs:
+  terraform-plan:
+    name: "📖 Terraform Plan"
+    runs-on: ubuntu-latest
+    needs: terraform-init
+    steps:
+      - name: "📥 Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "⚙️ Setup Terraform"
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.5.0"
+
+      - name: "⚙️ Init Terraform"
+        run: terraform init -input=false
+        working-directory: Terraform-GCP
+
+      - name: "📖 Generate Terraform Plan"
+        run: |
+          terraform plan -input=false \
+            -var-file="terraform-${{ inputs.environment }}.tfvars" \
+            -out=tfplan
+        working-directory: Infrastructure/Terraform-GCP
+
+      - name: "📄 Export Plan as JSON"
+        run: terraform show -json tfplan > plan.json
+        working-directory: Infrastructure/Terraform-GCP
+
+      - name: "⬆️ Upload Plan Artifacts"
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-plan-${{ inputs.environment }}
+          path: |
+            Infrastructure/Terraform-GCP/tfplan
+            Infrastructure/Terraform-GCP/plan.json

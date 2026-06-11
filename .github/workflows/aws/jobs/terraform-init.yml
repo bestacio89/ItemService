@@ -1,0 +1,108 @@
+name: "🏗️ Terraform Initialization"
+
+on:
+  workflow_dispatch:
+    inputs:
+      terraformDirectory:
+        description: "Path to Terraform working directory"
+        required: true
+        default: "Terraform-Infra"
+        type: string
+
+      terraformVersion:
+        description: "Terraform version to use"
+        required: true
+        default: "1.9.6"
+        type: string
+
+jobs:
+  terraform-init:
+    name: "Initialize Terraform"
+    runs-on: ubuntu-latest
+    environment:
+      name: infra
+
+    permissions:
+      contents: read
+
+    env:
+      TF_INPUT: "false"
+      TF_IN_AUTOMATION: "true"
+      TF_PLUGIN_CACHE_DIR: ~/.terraform.d/plugin-cache
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+
+    steps:
+      # ---------------------------
+      # ✅ Checkout repository
+      # ---------------------------
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+
+      # ---------------------------
+      # ✅ Configure AWS credentials (if needed)
+      # ---------------------------
+      - name: "Configure AWS Credentials"
+        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ---------------------------
+      # ✅ Cache Terraform plugins
+      # ---------------------------
+      - name: "Cache Terraform Plugins"
+        uses: actions/cache@v4
+        with:
+          path: ~/.terraform.d/plugin-cache
+          key: terraform-${{ runner.os }}-${{ github.event.inputs.terraformVersion }}
+          restore-keys: terraform-${{ runner.os }}-
+
+      # ---------------------------
+      # ✅ Setup Terraform
+      # ---------------------------
+      - name: "Setup Terraform"
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ github.event.inputs.terraformVersion }}
+
+      # ---------------------------
+      # ✅ Validate working directory
+      # ---------------------------
+      - name: "Validate Terraform Directory"
+        run: |
+          if [ ! -d "${{ github.event.inputs.terraformDirectory }}" ]; then
+            echo "❌ Directory '${{ github.event.inputs.terraformDirectory }}' not found."
+            exit 1
+          fi
+          echo "📂 Directory confirmed: '${{ github.event.inputs.terraformDirectory }}'"
+
+      # ---------------------------
+      # ✅ Initialize Terraform
+      # ---------------------------
+      - name: "Initialize Terraform"
+        working-directory: ${{ github.event.inputs.terraformDirectory }}
+        run: |
+          echo "🏗️ Initializing Terraform in $(pwd)..."
+          terraform init -input=false -no-color
+
+      # ---------------------------
+      # ✅ Verify backend configuration
+      # ---------------------------
+      - name: "Verify Terraform Backend"
+        working-directory: ${{ github.event.inputs.terraformDirectory }}
+        run: |
+          echo "🔍 Checking backend configuration..."
+          terraform providers
+          terraform workspace show
+          echo "✅ Terraform backend and workspace verified."
+
+      # ---------------------------
+      # ✅ Output version & summary
+      # ---------------------------
+      - name: "Terraform Info Summary"
+        run: |
+          terraform version
+          echo "🌍 AWS Region: $AWS_REGION"
+          echo "🏗️ Terraform initialized successfully in '${{ github.event.inputs.terraformDirectory }}'"

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="../../../common.targets" />
+
+  <ItemGroup>
+    <PackageReference Include="Franz.Common.DependencyInjection"/>
+    <PackageReference Include="Franz.Common.Http.Client"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ItemService.Contracts\ItemService.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>
+
+
+

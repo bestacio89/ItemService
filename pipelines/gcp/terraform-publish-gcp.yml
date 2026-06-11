@@ -1,0 +1,123 @@
+trigger: none  # 🔥 Prevent auto-trigger, run manually
+
+# ========================================
+# ✅ Parameters
+# ========================================
+parameters:
+  - name: repository
+    displayName: "Repository Name"
+    type: string
+    default: "Franz"
+
+  - name: serviceName
+    displayName: "Microservice Name"
+    type: string
+    default: "microservice"
+
+  - name: gcpArtifactRegistry
+    displayName: "GCP Artifact Registry URL"
+    type: string
+    default: "<GCP_ARTIFACT_REGISTRY>"  # 🔥 Replace with your actual GCP Artifact Registry
+
+  - name: deployToGKE
+    displayName: "Deploy to GKE (true) or Cloud Run (false)"
+    type: boolean
+    default: false
+
+# ========================================
+# ✅ Agent
+# ========================================
+pool:
+  vmImage: 'ubuntu-latest'
+
+# ========================================
+# ✅ Variables
+# ========================================
+variables:
+  GCP_PROJECT_ID: $(GCP_PROJECT_ID)
+  GCP_REGION: "us-central1"
+  GCP_SERVICE_ACCOUNT_KEY: $(GCP_SERVICE_ACCOUNT_KEY)
+  IMAGE_TAG: "$(Build.BuildId)"   # 🔥 unique tag per build
+
+# ========================================
+# ✅ Stages
+# ========================================
+stages:
+  # ========================================
+  # 🔨 Build & Push Docker Image
+  # ========================================
+  - stage: BuildAndPushDocker
+    displayName: "Build & Push Docker Image"
+    jobs:
+      - job: BuildDocker
+        displayName: "Build and Push to GCP Artifact Registry"
+        steps:
+          - task: Bash@3
+            displayName: "Authenticate to Google Cloud"
+            inputs:
+              targetType: inline
+              script: |
+                echo "$GCP_SERVICE_ACCOUNT_KEY" | gcloud auth activate-service-account --key-file=-
+                gcloud config set project $GCP_PROJECT_ID
+                gcloud auth configure-docker $GCP_REGION-docker.pkg.dev --quiet
+
+          - task: Bash@3
+            displayName: "Build & Push Docker Image"
+            inputs:
+              targetType: inline
+              script: |
+                IMAGE=${{ parameters.gcpArtifactRegistry }}/${{ parameters.serviceName }}:$(IMAGE_TAG)
+                echo "Building Docker image: $IMAGE"
+                docker build -t $IMAGE .
+                echo "Pushing image..."
+                docker push $IMAGE
+                echo "##vso[task.setvariable variable=DEPLOY_IMAGE]$IMAGE"  # 🔥 pass image to deploy stage
+
+  # ========================================
+  # 🚀 Deploy to GCP (GKE or Cloud Run)
+  # ========================================
+  - stage: DeployMicroservice
+    displayName: "Deploy to GCP"
+    dependsOn: BuildAndPushDocker
+    jobs:
+      - job: DeployToGKE
+        condition: eq(${{ parameters.deployToGKE }}, true)
+        displayName: "Deploy to GKE"
+        steps:
+          - task: Bash@3
+            displayName: "Authenticate & Connect to GKE"
+            inputs:
+              targetType: inline
+              script: |
+                echo "$GCP_SERVICE_ACCOUNT_KEY" | gcloud auth activate-service-account --key-file=-
+                gcloud config set project $GCP_PROJECT_ID
+                gcloud container clusters get-credentials gke-${{ parameters.repository }}-cluster --region $GCP_REGION
+
+          - task: Bash@3
+            displayName: "Deploy to GKE with kubectl"
+            inputs:
+              targetType: inline
+              script: |
+                echo "Deploying image: $(DEPLOY_IMAGE)"
+                kubectl set image deployment/${{ parameters.serviceName }} \
+                  ${{ parameters.serviceName }}=$(DEPLOY_IMAGE)
+                kubectl rollout status deployment/${{ parameters.serviceName }}
+
+      - job: DeployToCloudRun
+        condition: eq(${{ parameters.deployToGKE }}, false)
+        displayName: "Deploy to Cloud Run"
+        steps:
+          - task: Bash@3
+            displayName: "Authenticate & Deploy to Cloud Run"
+            inputs:
+              targetType: inline
+              script: |
+                echo "$GCP_SERVICE_ACCOUNT_KEY" | gcloud auth activate-service-account --key-file=-
+                gcloud config set project $GCP_PROJECT_ID
+
+                echo "Deploying image: $(DEPLOY_IMAGE)"
+                gcloud run deploy ${{ parameters.serviceName }} \
+                  --image=$(DEPLOY_IMAGE) \
+                  --region=$GCP_REGION \
+                  --platform=managed \
+                  --allow-unauthenticated

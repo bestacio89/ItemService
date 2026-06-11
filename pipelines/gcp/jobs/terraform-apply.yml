@@ -1,0 +1,67 @@
+- job: terraform-apply
+  displayName: "🚀 Terraform Apply"
+  dependsOn: terraform-plan
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+    - checkout: self
+
+    # ---------------------------
+    # ✅ Check Kafka existence
+    # ---------------------------
+    - script: |
+        echo "🔎 Checking if Kafka Hub already exists..."
+        EXISTING_KAFKA=$(aws kafka list-clusters \
+          --region $(AWS_REGION) \
+          --query "ClusterInfoList[?ClusterName=='$(KAFKA_CLUSTER_NAME)'].ClusterName" \
+          --output text)
+
+        if [ -n "$EXISTING_KAFKA" ]; then
+          echo "✅ Kafka Hub already exists: $EXISTING_KAFKA"
+          echo "##vso[task.setvariable variable=KAFKA_EXISTS;isOutput=true]true"
+        else
+          echo "⚠️ Kafka Hub does not exist. It will be created."
+          echo "##vso[task.setvariable variable=KAFKA_EXISTS;isOutput=true]false"
+        fi
+      displayName: "Check Kafka Hub Exists"
+      env:
+        AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+        AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+
+    # ---------------------------
+    # ✅ Check RabbitMQ existence
+    # ---------------------------
+    - script: |
+        echo "🔎 Checking if RabbitMQ broker already exists..."
+        EXISTING_RABBIT=$(aws mq list-brokers \
+          --region $(AWS_REGION) \
+          --query "BrokerSummaries[?BrokerName=='$(RABBITMQ_BROKER_NAME)'].BrokerName" \
+          --output text)
+
+        if [ -n "$EXISTING_RABBIT" ]; then
+          echo "✅ RabbitMQ broker already exists: $EXISTING_RABBIT"
+          echo "##vso[task.setvariable variable=RABBIT_EXISTS;isOutput=true]true"
+        else
+          echo "⚠️ RabbitMQ broker does not exist. It will be created."
+          echo "##vso[task.setvariable variable=RABBIT_EXISTS;isOutput=true]false"
+        fi
+      displayName: "Check RabbitMQ Exists"
+      env:
+        AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+        AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+
+    # ---------------------------
+    # ✅ Apply Terraform
+    # ---------------------------
+    - script: |
+        if [ "$(KAFKA_EXISTS)" == "true" ] && [ "$(RABBIT_EXISTS)" == "true" ]; then
+          echo "⏩ Skipping Terraform Apply — both Kafka & RabbitMQ already exist."
+        else
+          echo "🚀 Applying Terraform plan..."
+          terraform apply -auto-approve tfplan
+        fi
+      displayName: "Terraform Apply"
+      env:
+        AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+        AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)

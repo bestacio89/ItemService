@@ -1,0 +1,68 @@
+# ========================================
+# GitLab CI/CD - Build & Test (.NET)
+# ========================================
+stages:
+  - build
+  - test
+  - artifacts
+
+# ✅ Run only on develop branch
+build-and-test:
+  stage: build
+  image: mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019  # Windows-based .NET Framework SDK
+  tags:
+    - windows  # Requires a Windows GitLab runner
+  variables:
+    SOLUTION: "**/*.sln"
+    BUILD_PLATFORM: "Any CPU"
+    BUILD_CONFIGURATION: "Release"
+
+  script:
+    # ----------------------------------------
+    # 📦 Restore NuGet Packages
+    # ----------------------------------------
+    - nuget restore "$SOLUTION" -ConfigFile nuget.config
+
+    # ----------------------------------------
+    # 🔨 Build Solution
+    # ----------------------------------------
+    - msbuild "$SOLUTION" /p:Platform="$BUILD_PLATFORM" /p:Configuration="$BUILD_CONFIGURATION" /p:ExcludeProjects="**/Franz.DockerCompose/Franz.DockerCompose.dcproj"
+
+  artifacts:
+    paths:
+      - bin/
+      - obj/
+    expire_in: 7 days
+
+# ✅ Run Unit Tests (skip Integration)
+unit-tests:
+  stage: test
+  image: mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019
+  tags:
+    - windows
+  variables:
+    BUILD_PLATFORM: "Any CPU"
+    BUILD_CONFIGURATION: "Release"
+
+  script:
+    - echo "🧪 Running Unit Tests (skip Integration)"
+    - vstest.console.exe **\*test*.dll --TestCaseFilter:"Category!=Integration"
+
+  artifacts:
+    when: always
+    paths:
+      - TestResults/
+    reports:
+      junit: TestResults/*.trx
+
+# ✅ Publish Test Results + Artifacts
+publish-artifacts:
+  stage: artifacts
+  script:
+    - echo "📦 Publishing Build Artifacts"
+  artifacts:
+    paths:
+      - TestResults/
+      - bin/
+      - obj/
+    expire_in: 7 days

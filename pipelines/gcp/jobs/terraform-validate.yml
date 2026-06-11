@@ -1,0 +1,28 @@
+jobs:
+- job: Terraform_Validate
+  displayName: "Terraform Validate"
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+    - checkout: self
+
+    - task: TerraformInstaller@1
+      displayName: "Install Terraform"
+      inputs:
+        terraformVersion: '1.9.6'   # Align with all clouds
+
+    - script: |
+        echo "Running Terraform fmt check..."
+        terraform fmt -check -recursive
+
+        echo "Initializing (backend disabled for validate)..."
+        terraform init -backend=false
+
+        echo "Validating Terraform configuration in $(System.DefaultWorkingDirectory)/Terraform-GCP"
+        terraform validate -json > validate-report.json
+      displayName: "Validate Terraform Configuration"
+      workingDirectory: Terraform-GCP
+
+    - publish: $(System.DefaultWorkingDirectory)/Terraform-GCP/validate-report.json
+      artifact: terraform-validate-report

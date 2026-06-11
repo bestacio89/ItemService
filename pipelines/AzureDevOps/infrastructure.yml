@@ -1,0 +1,118 @@
+pr: none
+trigger: none   # Manual only
+
+parameters:
+  - name: databaseType
+    type: string
+    default: "single"
+    values: [ single, multi ]
+
+  - name: eventStorageType
+    type: string
+    default: "Kafka"
+    values: [ Kafka, CosmosDB, MongoDB ]
+
+  - name: entityStorageType
+    type: string
+    default: "SQLServer"
+    values: [ PostgreSQL, MariaDB, MySQL, SQLServer, Oracle ]
+
+  - name: messagingType
+    type: string
+    default: "Kafka"
+    values: [ Kafka, RabbitMQ, Both, None ]
+
+  - name: environment
+    type: string
+    default: "dev"
+    values: [ dev, staging, prod ]
+
+  - name: containerImage
+    type: string
+    default: ""   # injected from build pipeline
+
+variables:
+  # 👇 Dynamic environment-specific variable group
+  - group: Variables-${{ parameters.environment }}
+
+jobs:
+- job: Deploy
+  displayName: "🚀 Infra Deployment"
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+    # 🔑 Fetch DB Secret (optional – only if not using Key Vault refs in var group)
+    - task: AzureCLI@2
+      displayName: "🔑 Fetch Secrets from Key Vault"
+      condition: ne('${{ parameters.environment }}','') # skip if not needed
+      inputs:
+        azureSubscription: 'your-azure-subscription'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          DB_CONNECTION_STRING=$(az keyvault secret show \
+            --name DBConnectionString \
+            --vault-name $(keyVaultName) \
+            --query value -o tsv)
+
+          echo "##vso[task.setvariable variable=DB_CONNECTION_STRING;isSecret=true]$DB_CONNECTION_STRING"
+
+    # 🚀 Deploy with Bicep
+    - task: AzureCLI@2
+      displayName: "🚀 Deploy Infra with Bicep"
+      inputs:
+        azureSubscription: 'your-azure-subscription'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "===================================="
+          echo "🌍 Env:         ${{ parameters.environment }}"
+          echo "🗄️ DB:          ${{ parameters.databaseType }}"
+          echo "📂 Event:       ${{ parameters.eventStorageType }}"
+          echo "📂 Entity:      ${{ parameters.entityStorageType }}"
+          echo "📩 Messaging:   ${{ parameters.messagingType }}"
+          echo "🐳 Image:       ${{ parameters.containerImage }}"
+          echo "===================================="
+
+          # Explicit per-environment deployment name
+          az deployment group create \
+            --resource-group $(resourceGroupName) \
+            --name main-${{ parameters.environment }} \
+            --template-file main.bicep \
+            --mode Incremental \
+            --only-show-errors \
+            --parameters \
+              databaseType=${{ parameters.databaseType }} \
+              eventStorageType=${{ parameters.eventStorageType }} \
+              entityStorageType=${{ parameters.entityStorageType }} \
+              messagingType=${{ parameters.messagingType }} \
+              environment=${{ parameters.environment }} \
+              containerImage=${{ parameters.containerImage }} \
+              DBConnectionString=$(DB_CONNECTION_STRING)
+
+    # 📤 Capture Outputs
+    - task: AzureCLI@2
+      displayName: "📤 Capture Bicep Outputs"
+      inputs:
+        azureSubscription: 'your-azure-subscription'
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          outputs=$(az deployment group show \
+            -g $(resourceGroupName) \
+            -n main-${{ parameters.environment }} \
+            --query properties.outputs)
+          
+          echo "🔎 Raw Outputs: $outputs"
+
+          # Export outputs as pipeline variables
+          echo $outputs | jq -r 'to_entries|.[]| "##vso[task.setvariable variable=\(.key);isOutput=true]\(.value.value)"'
+
+          # Persist outputs to artifact file
+          echo $outputs > $(Build.ArtifactStagingDirectory)/infra-outputs.json
+
+    # 📦 Publish Outputs as Artifact
+    - publish: $(Build.ArtifactStagingDirectory)/infra-outputs.json
+      artifact: infra-outputs-${{ parameters.environment }}
+      displayName: "📦 Publish Infra Outputs"

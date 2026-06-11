@@ -1,0 +1,85 @@
+pr: none   # ❌ Prevent auto-trigger on PRs
+trigger: none   # ❌ Ensure manual execution only
+
+parameters:
+  - name: repository
+    displayName: Repository Name
+    default: Franz
+
+  - name: major
+    displayName: Major Version {x.0.0}
+    type: number
+    default: 2
+
+  - name: minor
+    displayName: Minor Version {1.x.0}
+    type: number
+    default: 1
+
+  - name: patch
+    displayName: Patch Version {1.0.x}
+    type: string
+    default: 5
+
+  - name: frontEndType
+    displayName: "Front-End Type"
+    type: string
+    default: "Blazor"
+    values:
+      - Angular
+      - Blazor
+      - ASP.NET
+
+variables:
+  - group: "Azure Variables"  # ✅ Environment-specific vars
+  - name: imageTag
+    value: ${{ parameters.major }}.${{ parameters.minor }}.${{ parameters.patch }}
+
+stages:
+
+
+# ========================================
+# ✅ BUILD BACKEND STAGE
+# ========================================
+- stage: Build_Backend
+  displayName: "🚀 Build Backend"
+  dependsOn: Build_Frontend
+  jobs:
+    - job: DockerBuildBackend
+      displayName: "🐳 Docker Build & Push Backend"
+      pool:
+        vmImage: 'ubuntu-latest'
+      steps:
+        - task: Docker@2
+          displayName: "🐳 Build & Push API Image"
+          inputs:
+            containerRegistry: $(AZURE_CONTAINER_REGISTRY)
+            repository: "${{ parameters.repository }}-api"
+            dockerfile: "sources/back/Franz.Api/Dockerfile"
+            buildContext: "sources/back/Franz.Api"
+            command: buildAndPush
+            tags: |
+              $(imageTag)
+              latest
+
+        - task: Docker@2
+          displayName: "🐳 Build & Push Consumer Image"
+          inputs:
+            containerRegistry: $(AZURE_CONTAINER_REGISTRY)
+            repository: "${{ parameters.repository }}-consumer"
+            dockerfile: "sources/back/Franz.Backend/Consumer/Dockerfile"
+            buildContext: "sources/back/Franz.Backend/Consumer"
+            command: buildAndPush
+            tags: |
+              $(imageTag)
+              latest
+
+        - script: |
+            echo "{ 
+              \"api\": \"${{ parameters.repository }}-api:$(imageTag)\",
+              \"consumer\": \"${{ parameters.repository }}-consumer:$(imageTag)\" 
+            }" > $(Build.ArtifactStagingDirectory)/backend-images.json
+          displayName: "📦 Save Backend Image Tags"
+
+        - publish: $(Build.ArtifactStagingDirectory)/backend-images.json
+          artifact: backend-images

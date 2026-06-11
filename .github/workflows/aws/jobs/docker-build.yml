@@ -1,0 +1,90 @@
+name: "🐳 Build & Push Docker Image to AWS ECR"
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: "Repository name (ECR repo)"
+        required: true
+        default: "franz-api"
+        type: string
+
+      dockerfile:
+        description: "Path to Dockerfile"
+        required: true
+        default: "sources/back/Franz.Api/Dockerfile"
+        type: string
+
+      buildContext:
+        description: "Docker build context"
+        required: true
+        default: "sources/back/Franz.Api"
+        type: string
+
+env:
+  DOCKER_BUILDKIT: "1"
+  AWS_REGION: "us-east-1"
+  IMAGE_TAG: ${{ github.run_number }}
+
+jobs:
+  docker-build:
+    name: "🐳 Docker Build & Push"
+    runs-on: ubuntu-latest
+    environment:
+      name: build
+
+    steps:
+      # ---------------------------
+      # ✅ Checkout repository
+      # ---------------------------
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+
+      # ---------------------------
+      # ✅ Configure AWS credentials
+      # ---------------------------
+      - name: "Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ---------------------------
+      # ✅ Login to AWS ECR
+      # ---------------------------
+      - name: "Login to AWS ECR"
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ---------------------------
+      # ✅ Build Docker Image
+      # ---------------------------
+      - name: "Build Docker Image"
+        run: |
+          echo "Building image for repository: ${{ github.event.inputs.repository }}"
+          docker build \
+            -f ${{ github.event.inputs.dockerfile }} \
+            -t ${{ github.event.inputs.repository }}:${{ env.IMAGE_TAG }} \
+            -t ${{ github.event.inputs.repository }}:latest \
+            ${{ github.event.inputs.buildContext }}
+
+      # ---------------------------
+      # ✅ Tag image with full ECR path
+      # ---------------------------
+      - name: "Tag Docker Image with ECR Path"
+        run: |
+          ECR_URI="${{ steps.login-ecr.outputs.registry }}/${{ github.event.inputs.repository }}"
+          echo "Tagging image for ECR: $ECR_URI"
+          docker tag ${{ github.event.inputs.repository }}:${{ env.IMAGE_TAG }} $ECR_URI:${{ env.IMAGE_TAG }}
+          docker tag ${{ github.event.inputs.repository }}:latest $ECR_URI:latest
+          echo "ECR_URI=$ECR_URI" >> $GITHUB_ENV
+
+      # ---------------------------
+      # ✅ Push Docker Image to AWS ECR
+      # ---------------------------
+      - name: "Push Docker Image"
+        run: |
+          echo "Pushing image to $ECR_URI..."
+          docker push $ECR_URI:${{ env.IMAGE_TAG }}
+          docker push $ECR_URI:latest

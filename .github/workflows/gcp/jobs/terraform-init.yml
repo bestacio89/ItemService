@@ -1,0 +1,47 @@
+name: "Terraform Init"
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Deployment Environment"
+        required: true
+        type: string
+
+jobs:
+  terraform-init:
+    name: "🚀 Terraform Init"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "📥 Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "⚙️ Setup Terraform"
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.5.0"
+
+      - name: "🛡️ Validate Backend Config Exists"
+        run: |
+          if [ ! -f "backend-${{ inputs.environment }}.tfvars" ]; then
+            echo "❌ backend-${{ inputs.environment }}.tfvars not found!"
+            exit 1
+          fi
+        working-directory: Infrastructure/Terraform-GCP
+
+      - name: "🚀 Initialize Terraform Backend"
+        run: terraform init -input=false -backend-config="backend-${{ inputs.environment }}.tfvars"
+        working-directory: Infrastructure/Terraform-GCP
+
+      - name: "🧹 Check Terraform Formatting"
+        run: terraform fmt -check -recursive
+        working-directory: Infrastructure/Terraform-GCP
+
+      - name: "⬆️ Upload Init Artifacts"
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-init-${{ inputs.environment }}
+          path: |
+            Infrastructure/Terraform-GCP/.terraform
+            Infrastructure/Terraform-GCP/.terraform.lock.hcl

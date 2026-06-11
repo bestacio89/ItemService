@@ -1,0 +1,76 @@
+name: "🚀 Deploy Microservice to AWS ECS"
+
+on:
+  workflow_dispatch:
+    inputs:
+      imageTag:
+        description: "Docker image tag to deploy"
+        required: true
+        default: "latest"
+        type: string
+
+jobs:
+  deploy:
+    name: "Deploy to AWS ECS"
+    runs-on: ubuntu-latest
+    environment:
+      name: production   # ✅ use GitHub Environments for approval gate (configure reviewers in Settings → Environments)
+
+    env:
+      AWS_REGION: "us-east-1"
+      ECS_CLUSTER_NAME: ${{ secrets.ECS_CLUSTER_NAME }}
+      SERVICE_NAME: ${{ secrets.SERVICE_NAME }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+
+    steps:
+      # ---------------------------
+      # ✅ Checkout repository
+      # ---------------------------
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+
+      # ---------------------------
+      # ✅ Configure AWS credentials
+      # ---------------------------
+      - name: "Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ---------------------------
+      # ✅ Login to Amazon ECR
+      # ---------------------------
+      - name: "Login to Amazon ECR"
+        run: |
+          echo "🔑 Logging in to Amazon ECR..."
+          aws ecr get-login-password --region $AWS_REGION \
+            | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+      # ---------------------------
+      # ✅ Update ECS service with new image tag
+      # ---------------------------
+      - name: "Deploy Microservice to AWS ECS"
+        run: |
+          echo "🚀 Updating ECS service $SERVICE_NAME in cluster $ECS_CLUSTER_NAME..."
+          IMAGE_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${SERVICE_NAME}:${{ github.event.inputs.imageTag }}"
+          echo "Using image: $IMAGE_URI"
+
+          aws ecs update-service \
+            --cluster "$ECS_CLUSTER_NAME" \
+            --service "$SERVICE_NAME" \
+            --force-new-deployment \
+            --region "$AWS_REGION"
+
+      # ---------------------------
+      # ✅ Wait for deployment stabilization
+      # ---------------------------
+      - name: "Verify ECS Deployment"
+        run: |
+          echo "⏳ Waiting for ECS service $SERVICE_NAME to stabilize..."
+          aws ecs wait services-stable \
+            --cluster "$ECS_CLUSTER_NAME" \
+            --services "$SERVICE_NAME" \
+            --region "$AWS_REGION"
+          echo "✅ Deployment complete and service is stable."

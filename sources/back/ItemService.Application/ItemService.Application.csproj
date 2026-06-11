@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="../../../common.targets" />
+
+  <ItemGroup>
+    <PackageReference Include="Franz.Common.Business"/>
+    <PackageReference Include="Franz.Common.Hosting"/>
+    <PackageReference Include="Franz.Common.Mapping"/>
+    <PackageReference Include="Franz.Common.Mediator"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ItemService.Contracts\ItemService.Contracts.csproj" />
+    <ProjectReference Include="..\ItemService.Domain\ItemService.Domain.csproj" />
+    <ProjectReference Include="..\ItemService.Persistence\ItemService.Persistence.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Features\Example\Commands\" />
+    <Folder Include="Features\Example\Queries\" />
+  </ItemGroup>
+
+</Project>
+
+
+

@@ -1,0 +1,31 @@
+version: '3.4'
+
+services:
+  Franz.Api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    networks:
+      - nt_Franz
+    container_name: Franz_api
+    
+  Franz.Consumer:
+    environment:
+      - DOTNET_ENVIRONMENT=Docker
+    restart: always  
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    networks:
+      - nt_Franz
+    container_name: Franz_consumer
+    
+networks:
+  nt_Franz:
+    name: nt_Franz

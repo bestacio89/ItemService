@@ -1,0 +1,124 @@
+name: "Manual Infrastructure Deployment"
+
+on:
+  workflow_dispatch:
+    inputs:
+      databaseType:
+        description: "Database Type"
+        required: true
+        default: "single"
+        type: choice
+        options:
+          - single
+          - multi
+      eventStorageType:
+        description: "Event Storage Type (Only for Multi-DB)"
+        required: false
+        default: "Kafka"
+        type: choice
+        options:
+          - Kafka
+          - CosmosDB
+          - MongoDB
+      entityStorageType:
+        description: "Entity Storage Type"
+        required: true
+        default: "SQLServer"
+        type: choice
+        options:
+          - PostgreSQL
+          - MariaDB
+          - MySQL
+          - SQLServer
+          - Oracle
+      messagingType:
+        description: "Messaging Broker"
+        required: false
+        default: "None"
+        type: choice
+        options:
+          - None
+          - Kafka
+          - RabbitMQ
+          - Both
+      environment:
+        description: "Deployment environment"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+env:
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  KEY_VAULT_NAME: ${{ secrets.AZURE_KEY_VAULT_NAME }}
+  RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+
+jobs:
+  deploy-infrastructure:
+    name: "Deploy Infrastructure"
+    runs-on: ubuntu-latest
+    steps:
+      - name: "📥 Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "🔑 Login to Azure"
+        uses: azure/login@v1
+        with:
+          creds: |
+            {
+              "clientId": "${{ env.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ env.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ env.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ env.AZURE_TENANT_ID }}"
+            }
+
+      - name: "🔐 Fetch Secrets from Azure Key Vault"
+        id: keyvault
+        run: |
+          echo "Fetching DB connection string from Key Vault..."
+          DB_CONNECTION_STRING=$(az keyvault secret show \
+            --name DBConnectionString \
+            --vault-name "$KEY_VAULT_NAME" \
+            --query value -o tsv)
+          echo "db_connection_string=$DB_CONNECTION_STRING" >> $GITHUB_OUTPUT
+
+      - name: "🚀 Deploy Infrastructure with Bicep"
+        run: |
+          echo "Deploying to environment: ${{ github.event.inputs.environment }}"
+          echo "Database: ${{ github.event.inputs.databaseType }}, Messaging: ${{ github.event.inputs.messagingType }}"
+
+          az deployment group create \
+            --resource-group "$RESOURCE_GROUP" \
+            --template-file "Infrastructure/AzureDevops-Bicep/main.bicep" \
+            --mode Incremental \
+            --only-show-errors \
+            --parameters \
+              databaseType="${{ github.event.inputs.databaseType }}" \
+              eventStorageType="${{ github.event.inputs.eventStorageType }}" \
+              entityStorageType="${{ github.event.inputs.entityStorageType }}" \
+              messagingType="${{ github.event.inputs.messagingType }}" \
+              environment="${{ github.event.inputs.environment }}" \
+              DBConnectionString="${{ steps.keyvault.outputs.db_connection_string }}"
+
+      - name: "📦 Save Deployment Outputs"
+        run: |
+          DEPLOY_NAME="deploy-$(date +'%Y%m%d%H%M%S')"
+          echo "Saving outputs for deployment: $DEPLOY_NAME"
+          az deployment group show \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$DEPLOY_NAME" \
+            --query properties.outputs > deployment-outputs.json
+        continue-on-error: true
+
+      - name: "⬆️ Upload Deployment Outputs"
+        uses: actions/upload-artifact@v3
+        with:
+          name: infra-deployment-outputs
+          path: deployment-outputs.json
+          retention-days: 7

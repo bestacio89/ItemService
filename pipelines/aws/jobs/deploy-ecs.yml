@@ -1,0 +1,64 @@
+name: "🚀 Deploy Microservice to AWS ECS"
+
+on:
+  workflow_dispatch:   # ✅ Manual trigger only (safe for deploys)
+
+jobs:
+  deploy:
+    name: "Deploy to AWS ECS"
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: "us-east-1"
+      ECS_CLUSTER_NAME: ${{ secrets.ECS_CLUSTER_NAME }}
+      SERVICE_NAME: ${{ secrets.SERVICE_NAME }}
+
+    steps:
+      # ---------------------------
+      # ✅ Checkout repo
+      # ---------------------------
+      - name: "Checkout Repository"
+        uses: actions/checkout@v3
+
+      # ---------------------------
+      # ✅ Configure AWS credentials
+      # ---------------------------
+      - name: "Configure AWS CLI"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ---------------------------
+      # ✅ (Optional) Login to Amazon ECR
+      # Only needed if you are building/pushing in this workflow
+      # ---------------------------
+      - name: "Login to Amazon ECR"
+        run: |
+          aws ecr get-login-password --region $AWS_REGION \
+            | docker login --username AWS --password-stdin <account_id>.dkr.ecr.$AWS_REGION.amazonaws.com
+
+      # ---------------------------
+      # ✅ Deploy new revision
+      # ---------------------------
+      - name: "Deploy Microservice to AWS ECS"
+        run: |
+          echo "Updating ECS service $SERVICE_NAME in cluster $ECS_CLUSTER_NAME..."
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER_NAME \
+            --service $SERVICE_NAME \
+            --force-new-deployment \
+            --region $AWS_REGION
+
+      # ---------------------------
+      # ✅ Verify deployment
+      # ---------------------------
+      - name: "Verify ECS Deployment"
+        run: |
+          echo "Waiting for ECS service $SERVICE_NAME to stabilize..."
+          aws ecs wait services-stable \
+            --cluster $ECS_CLUSTER_NAME \
+            --services $SERVICE_NAME \
+            --region $AWS_REGION
+          echo "✅ Deployment complete and service is stable."
