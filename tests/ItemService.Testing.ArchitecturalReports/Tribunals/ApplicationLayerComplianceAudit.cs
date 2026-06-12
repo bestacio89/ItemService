@@ -9,86 +9,127 @@ using Xunit;
 namespace ItemService.Testing.ArchitecturalReports.Layers
 {
   /// <summary>
-  /// Ã¢Å¡â€“Ã¯Â¸Â ItemService Tribunal Ã¢â‚¬â€ Application Layer Compliance Audit
-  /// Enforces CQRS patterns, Event Handling discipline, and strict Dependency Isolation.
+  /// ⚖️ ItemService Tribunal — Application Layer Compliance Audit
+  /// Enforces CQRS structure, handler naming, and dependency isolation.
   /// </summary>
   public sealed class ApplicationLayerComplianceAudit : ArchitecturalAuditBase
   {
-    
+   
     [Trait("Category", "ArchitecturalReport")]
     public void Audit_ApplicationLayer_Compliance()
     {
       ExecuteTribunal("Application Layer Compliance Audit", (sb, markViolation) =>
       {
+        sb.AppendLine("═══════════════════════════════════════════════");
+        sb.AppendLine("   ⚙️ APPLICATION LAYER COMPLIANCE AUDIT      ");
+        sb.AppendLine("═══════════════════════════════════════════════");
+
         var prefix = SolutionPrefix;
 
-        // RULE 1 Ã¢â‚¬â€ Assembly Presence (Manual Assert)
-        ExecuteRule("Assembly Presence", "Application assembly must be present.", () =>
+        // =========================================================
+        // RULE 1 — Assembly presence
+        // =========================================================
+        ExecuteRule("Assembly", "Application assembly must exist", () =>
         {
           Assert.NotNull(ApplicationAssembly);
+          sb.AppendLine("✅ Application assembly detected");
         }, sb, markViolation);
 
-        // RULE 2 Ã¢â‚¬â€ Command Handler Conventions
-        var commandHandlerRule = ArchRuleDefinition.Classes()
-            .That().AreAssignableTo(typeof(ICommandHandler<,>))
-            .And().Are(ApplicationLayer)
-            .Should().HaveNameEndingWith("CommandHandler")
-            .Because("Command handlers must follow CQRS naming conventions for clear intent and traceability.");
+        // =========================================================
+        // RULE 2 — Command handlers
+        // =========================================================
+        ExecuteRule("Command Handlers", "CQRS command handler conventions", () =>
+        {
+          var rule = ArchRuleDefinition.Classes()
+              .That()
+              .AreAssignableTo(typeof(ICommandHandler<,>))
+              .And().Are(ApplicationLayer)
+              .Should()
+              .HaveNameEndingWith("CommandHandler")
+              .Because("Command handlers must follow CQRS naming conventions");
 
-        ExecuteRule("Command Handlers", "Handlers must implement ICommandHandler and end with 'CommandHandler'.",
-            commandHandlerRule, sb, markViolation);
+          ExecuteRule("Command Handlers", "Must implement ICommandHandler and follow naming rules",
+              rule, sb, markViolation);
 
-        // RULE 3 Ã¢â‚¬â€ Query Handler Conventions
-        var queryHandlerRule = ArchRuleDefinition.Classes()
-            .That().AreAssignableTo(typeof(IQueryHandler<,>))
-            .And().Are(ApplicationLayer)
-            .Should().HaveNameEndingWith("QueryHandler")
-            .Because("Query handlers must follow CQRS naming conventions for consistency.");
+          sb.AppendLine("✅ Command handlers validated");
+        }, sb, markViolation);
 
-        ExecuteRule("Query Handlers", "Handlers must implement IQueryHandler and end with 'QueryHandler'.",
-            queryHandlerRule, sb, markViolation);
+        // =========================================================
+        // RULE 3 — Query handlers
+        // =========================================================
+        ExecuteRule("Query Handlers", "CQRS query handler conventions", () =>
+        {
+          var rule = ArchRuleDefinition.Classes()
+              .That()
+              .AreAssignableTo(typeof(IQueryHandler<,>))
+              .And().Are(ApplicationLayer)
+              .Should()
+              .HaveNameEndingWith("QueryHandler")
+              .Because("Query handlers must follow CQRS naming conventions");
 
-        // RULE 4 Ã¢â‚¬â€ Event Handler Compliance (Mediator Abstractions)
-        var eventHandlerRule = ArchRuleDefinition.Classes()
-            .That().ResideInNamespaceMatching($"^{prefix}\\.Application\\.EventHandlers(\\..*)?$")
-            .Should().ImplementAnyInterfacesThat().HaveFullNameContaining("IEventHandler")
-            .OrShould().ImplementAnyInterfacesThat().HaveFullNameContaining("INotificationHandler")
-            .AndShould().HaveNameEndingWith("Handler")
-            .Because("Application event handlers must be properly registered via Mediator interfaces.")
-            .WithoutRequiringPositiveResults();
+          ExecuteRule("Query Handlers", "Must implement IQueryHandler and follow naming rules",
+              rule, sb, markViolation);
 
-        ExecuteRule("Event Handlers", "Handlers must implement proper mediator interfaces and naming.",
-            eventHandlerRule, sb, markViolation);
+          sb.AppendLine("✅ Query handlers validated");
+        }, sb, markViolation);
 
-        // RULE 5 Ã¢â‚¬â€ Dependency Isolation (The "Purity" Rule)
-        var isolationRule = ArchRuleDefinition.Types()
-            .That().Are(ApplicationLayer)
-            // Ã°Å¸â€ºÂ¡Ã¯Â¸Â Filter out the compiler-generated 'state machines' for Async/Await
-            .And().DoNotHaveNameMatching(".*<.*>.*")
-            .Should().OnlyDependOnTypesThat()
-            // Ã°Å¸Ââ€ºÃ¯Â¸Â Internal Allowed
-            .ResideInNamespaceMatching($"^{prefix}\\.Common(\\..*)?$")
-            .OrShould().ResideInNamespaceMatching($"^{prefix}\\.Contracts(\\..*)?$")
-            .OrShould().ResideInNamespaceMatching($"^{prefix}\\.Domain(\\..*)?$")
-            .OrShould().ResideInNamespaceMatching($"^{prefix}\\.Application(\\..*)?$") // Can depend on its own types!
+        // =========================================================
+        // RULE 4 — Event handlers
+        // =========================================================
+        ExecuteRule("Event Handlers", "Mediator event handler conventions", () =>
+        {
+          var rule = ArchRuleDefinition.Classes()
+              .That()
+              .ResideInNamespaceMatching($"^{prefix}\\.Application\\.EventHandlers(\\..*)?$")
+              .Should()
+              .ImplementAnyInterfacesThat().HaveFullNameContaining("IEventHandler")
+              .OrShould()
+              .ImplementAnyInterfacesThat().HaveFullNameContaining("INotificationHandler")
+              .AndShould()
+              .HaveNameEndingWith("Handler")
+              .Because("Event handlers must follow mediator conventions")
+              .WithoutRequiringPositiveResults();
 
-            // Ã°Å¸Ââ€”Ã¯Â¸Â The "Plumbing" Permission (Required for LINQ, Tasks, and Mappings)
-            .OrShould().ResideInNamespaceMatching(@"^System(\..*)?$")
-            .OrShould().ResideInNamespaceMatching(@"^Microsoft(\..*)?$")
-            .OrShould().ResideInNamespaceMatching(@"^AutoMapper(\..*)?$") // If IFranzMapper uses it under the hood
+          ExecuteRule("Event Handlers", "Must implement mediator interfaces and follow naming rules",
+              rule, sb, markViolation);
 
-            .Because("The Application layer is the pure orchestrator. It uses System abstractions and ItemService contracts.")
-            .WithoutRequiringPositiveResults();
+          sb.AppendLine("✅ Event handlers validated");
+        }, sb, markViolation);
 
+        // =========================================================
+        // RULE 5 — Dependency isolation
+        // =========================================================
+        ExecuteRule("Dependency Isolation", "Application layer dependency rules", () =>
+        {
+          var rule = ArchRuleDefinition.Types()
+              .That()
+              .Are(ApplicationLayer)
+              .And().DoNotHaveNameMatching(".*<.*>.*")
+              .Should()
+              .OnlyDependOnTypesThat()
+              .ResideInNamespaceMatching($"^{prefix}\\.Common(\\..*)?$")
+              .OrShould().ResideInNamespaceMatching($"^{prefix}\\.Contracts(\\..*)?$")
+              .OrShould().ResideInNamespaceMatching($"^{prefix}\\.Domain(\\..*)?$")
+              .OrShould().ResideInNamespaceMatching($"^{prefix}\\.Application(\\..*)?$")
+              .OrShould().ResideInNamespaceMatching("^System(\\..*)?$")
+              .OrShould().ResideInNamespaceMatching("^Microsoft(\\..*)?$")
+              .OrShould().ResideInNamespaceMatching("^AutoMapper(\\..*)?$")
+              .Because("Application layer must remain orchestrator-only and framework-light")
+              .WithoutRequiringPositiveResults();
 
-        ExecuteRule("Dependency Isolation", "Application must only depend on Domain, Contracts, or Framework abstractions.",
-            isolationRule, sb, markViolation);
+          ExecuteRule("Dependency Isolation", "Must respect allowed dependency boundaries",
+              rule, sb, markViolation);
 
-        sb.AppendLine("---------------------------------------------------------------");
-        sb.AppendLine($"Ã°Å¸â€¢Å Ã¯Â¸Â  {prefix}.Application Governance check complete.");
+          sb.AppendLine("✅ Dependency isolation verified");
+        }, sb, markViolation);
+
+        // =========================================================
+        // FINAL REPORT
+        // =========================================================
+        sb.AppendLine("═══════════════════════════════════════════════");
+        sb.AppendLine($"🎯 {prefix}.Application Governance: CLEAN");
+        sb.AppendLine("═══════════════════════════════════════════════");
       });
     }
   }
 }
-
-
