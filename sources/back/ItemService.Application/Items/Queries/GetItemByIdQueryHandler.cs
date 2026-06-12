@@ -10,11 +10,11 @@ namespace ItemService.Application.Items.Queries;
 public sealed class GetItemByIdQueryHandler
     : IQueryHandler<GetItemByIdQuery, ItemDto>
 {
-  private readonly IEntityRepository<Item, Guid> _repo;
+  private readonly IEntityRepository<ItemEntity, Guid> _repo;
   private readonly IFranzMapper _mapper;
 
   public GetItemByIdQueryHandler(
-      IEntityRepository<Item, Guid> repo,
+      IEntityRepository<ItemEntity, Guid> repo,
       IFranzMapper mapper)
   {
     _repo = repo;
@@ -28,6 +28,6 @@ public sealed class GetItemByIdQueryHandler
     var item = await _repo.GetByIdAsync(request.ItemId, ct)
         ?? throw new InvalidOperationException($"Item {request.ItemId} not found");
 
-    return _mapper.Map<Item, ItemDto>(item);
+    return _mapper.Map<ItemEntity, ItemDto>(item);
   }
 }

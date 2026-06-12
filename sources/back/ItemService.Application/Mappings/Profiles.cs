@@ -101,7 +101,7 @@ public sealed class ItemProfile : FranzMapProfile
     // Item → DTO
     // Franz ConstructUsing — single src, all nested inline.
     // =========================================================
-    CreateMap<Item, ItemDto>()
+    CreateMap<ItemEntity, ItemDto>()
         .ConstructUsing(src => new ItemDto(
             src.Id,
             src.Name,

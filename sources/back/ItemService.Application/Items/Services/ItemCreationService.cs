@@ -8,18 +8,18 @@ namespace ItemService.Application.Items.Services;
 
 public sealed class ItemCreationService : IItemCreationService
 {
-  private readonly IEntityFactory<Guid, Item> _itemFactory;
+  private readonly IEntityFactory<Guid, ItemEntity> _itemFactory;
   private readonly IEntityFactory<Guid, ItemBaseStats> _statsFactory;
 
-  private readonly IEntityRepository<Item, Guid> _items;
+  private readonly IEntityRepository<ItemEntity, Guid> _items;
   private readonly IEntityRepository<ItemBaseStats, Guid> _stats;
 
   private readonly IItemUniquenessChecker _uniquenessChecker;
 
   public ItemCreationService(
-      IEntityFactory<Guid, Item> itemFactory,
+      IEntityFactory<Guid, ItemEntity> itemFactory,
       IEntityFactory<Guid, ItemBaseStats> statsFactory,
-      IEntityRepository<Item, Guid> items,
+      IEntityRepository<ItemEntity, Guid> items,
       IEntityRepository<ItemBaseStats, Guid> stats,
       IItemUniquenessChecker uniquenessChecker)
   {

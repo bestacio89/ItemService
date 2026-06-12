@@ -2,12 +2,13 @@
 using ItemService.Application.Items.Services;
 using ItemService.Contracts.Commands.Items;
 using ItemService.Domain.Core;
+using ItemService.Domain.Items.Core;
 
 public sealed class ItemUpdateService : IItemUpdateService
 {
-  private readonly IEntityRepository<Item, Guid> _items;
+  private readonly IEntityRepository<ItemEntity, Guid> _items;
 
-  public ItemUpdateService(IEntityRepository<Item, Guid> items)
+  public ItemUpdateService(IEntityRepository<ItemEntity, Guid> items)
   {
     _items = items;
   }

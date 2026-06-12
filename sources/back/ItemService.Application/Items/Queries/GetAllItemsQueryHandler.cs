@@ -10,11 +10,11 @@ namespace ItemService.Application.Items.Queries;
 public sealed class GetAllItemsQueryHandler
     : IQueryHandler<GetAllItemsQuery, IReadOnlyList<ItemDto>>
 {
-  private readonly IEntityRepository<Item, Guid> _repo;
+  private readonly IEntityRepository<ItemEntity, Guid> _repo;
   private readonly IFranzMapper _mapper;
 
   public GetAllItemsQueryHandler(
-      IEntityRepository<Item, Guid> repo,
+      IEntityRepository<ItemEntity, Guid> repo,
       IFranzMapper mapper)
   {
     _repo = repo;
@@ -28,7 +28,7 @@ public sealed class GetAllItemsQueryHandler
     var items = await _repo.GetAllAsync(ct);
 
     return items
-        .Select(i => _mapper.Map<Item, ItemDto>(i))
+        .Select(i => _mapper.Map<ItemEntity, ItemDto>(i))
         .ToList();
   }
 }

@@ -29,6 +29,6 @@ public sealed class GetItemByNameQueryHandler
     var item = await _repo.GetByNameAsync(request.Name, ct)
         ?? throw new InvalidOperationException($"Item '{request.Name}' not found");
 
-    return _mapper.Map<Item, ItemDto>(item);
+    return _mapper.Map<ItemEntity, ItemDto>(item);
   }
 }

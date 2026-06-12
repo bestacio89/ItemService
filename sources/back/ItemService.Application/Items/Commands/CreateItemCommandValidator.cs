@@ -8,9 +8,9 @@ namespace ItemService.Application.Items.Commands;
 public sealed class CreateItemCommandValidator
     : AbstractValidator<CreateItemCommand>
 {
-  private readonly IEntityRepository<Item, Guid> _repo;
+  private readonly IEntityRepository<ItemEntity, Guid> _repo;
 
-  public CreateItemCommandValidator(IEntityRepository<Item, Guid> repo)
+  public CreateItemCommandValidator(IEntityRepository<ItemEntity, Guid> repo)
   {
     _repo = repo;
 

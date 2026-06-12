@@ -1,12 +1,13 @@
 ﻿using Franz.Common.Business.Repositories;
 using ItemService.Application.Items.Services;
 using ItemService.Contracts.Commands.Items;
+using ItemService.Domain.Items.Core;
 
 public sealed class ItemDeletionService : IItemDeletionService
 {
-  private readonly IEntityRepository<Item, Guid> _items;
+  private readonly IEntityRepository<ItemEntity, Guid> _items;
 
-  public ItemDeletionService(IEntityRepository<Item, Guid> items)
+  public ItemDeletionService(IEntityRepository<ItemEntity, Guid> items)
   {
     _items = items;
   }

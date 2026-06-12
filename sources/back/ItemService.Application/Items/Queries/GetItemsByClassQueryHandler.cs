@@ -29,6 +29,6 @@ public sealed class GetItemsByClassQueryHandler
         request.PageSize,
         ct);
 
-    return _mapper.Map<IReadOnlyList<Item>, IReadOnlyList<ItemDto>>(paged.Items);
+    return _mapper.Map<IReadOnlyList<ItemEntity>, IReadOnlyList<ItemDto>>(paged.Items);
   }
 }
