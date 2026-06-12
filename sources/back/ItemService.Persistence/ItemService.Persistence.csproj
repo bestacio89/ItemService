@@ -31,6 +31,7 @@
     <Folder Include="Configurations\" />
     <Folder Include="Depots\" />
     <Folder Include="Migrations\" />
+    <Folder Include="Persistence\Extensions\" />
   </ItemGroup>
 
   <ItemGroup>
