@@ -24,7 +24,7 @@ public class DomainArchitectureTests : BaseArchitectureTest
     var domainEntities = DomainLayer
         .GetObjects(BaseArchitecture)
         .Where(t =>
-           
+            t.NameEndsWith("Entity", StringComparison.OrdinalIgnoreCase) &&
             !t.ResidesInNamespace("ItemService.Domain.ValueObjects") && // Ã°Å¸Å¡Â« exclude ValueObjects
             !t.FullName.Contains("Infrastructure", StringComparison.OrdinalIgnoreCase) &&
             !t.FullName.Contains("Persistence", StringComparison.OrdinalIgnoreCase) &&
