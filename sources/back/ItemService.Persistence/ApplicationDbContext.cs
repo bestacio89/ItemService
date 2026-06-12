@@ -36,6 +36,9 @@ public sealed class ApplicationDbContext : DbContextBase
           .HasMaxLength(150)
           .IsRequired();
 
+      builder.HasIndex(x => x.Name)
+          .IsUnique();
+      
       builder.Property(x => x.Category)
           .HasConversion<int>();
 
