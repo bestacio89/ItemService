@@ -86,7 +86,7 @@ namespace ItemService.Testing.ArchitectureTests
       }
       ArchRuleDefinition.
            Classes().That()
-          .ResideInNamespace("ItemService.Contracts.DTOS")
+          .ResideInNamespace("ItemService.Contracts.DTOS.Items")
           .Should()
           .HaveNameEndingWith("Dto")
           .Because("Dtos should be properly named as such")
