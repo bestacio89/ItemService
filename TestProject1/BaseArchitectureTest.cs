@@ -21,13 +21,13 @@ namespace ItemService.Testing
   /// </summary>
   public abstract class BaseArchitectureTest
   {
-    // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // --------------------------------------------------------------------------------------------------------------------
     // Static bootstrap
-    // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // --------------------------------------------------------------------------------------------------------------------
     static BaseArchitectureTest()
     {
       Console.OutputEncoding = System.Text.Encoding.UTF8;
-      Console.WriteLine("Ã°Å¸Â§Â© Preloading solution assemblies...");
+      Console.WriteLine("🧩 Preloading solution assemblies...");
 
       // Include Franz.Common and Franz.Common.Mediator
       const string allowedPattern =
@@ -52,15 +52,15 @@ namespace ItemService.Testing
         .OrderByDescending(g => g.Count())
         .FirstOrDefault()?.Key ?? "Unknown";
 
-      Console.WriteLine($"Ã¢Å¡â„¢Ã¯Â¸Â  Detected Solution Prefix: {solutionPrefix}");
-      foreach (var asm in assembliesToLoad) Console.WriteLine($"   Ã¢â‚¬Â¢ {asm.GetName().Name}");
+      Console.WriteLine($"⚙️  Detected Solution Prefix: {solutionPrefix}");
+      foreach (var asm in assembliesToLoad) Console.WriteLine($"   • {asm.GetName().Name}");
 
       // Build architecture graph
       BaseArchitecture = new ArchLoader()
         .LoadAssemblies(assembliesToLoad)
         .Build();
 
-      Console.WriteLine("Ã¢Å“â€¦ Architecture graph built successfully.\n");
+      Console.WriteLine("✅ Architecture graph built successfully.\n");
 
       // Late-binding by suffix (fallback)
       DomainAssembly = TryResolveAssembly(".Domain") ?? assembliesToLoad.FirstOrDefault(a => a.GetName().Name.EndsWith(".Domain", StringComparison.OrdinalIgnoreCase));
@@ -70,7 +70,7 @@ namespace ItemService.Testing
       ContractsAssembly = TryResolveAssembly(".Contracts") ?? assembliesToLoad.FirstOrDefault(a => a.GetName().Name.EndsWith(".Contracts", StringComparison.OrdinalIgnoreCase));
       // (Common assemblies are not strictly needed as fields, we just need them loaded into BaseArchitecture)
 
-      // Ã°Å¸â€Å½ Diagnostics Ã¢â‚¬â€ verify key interfaces are visible to the model
+      // 🔍 Diagnostics — verify key interfaces are visible to the model
       bool scopedExists = BaseArchitecture.Interfaces.Any(i => i.FullName == typeof(Franz.Common.DependencyInjection.IScopedDependency).FullName);
       bool singletonExists = BaseArchitecture.Interfaces.Any(i => i.FullName == typeof(Franz.Common.DependencyInjection.ISingletonDependency).FullName);
       bool icommandExists = BaseArchitecture.Interfaces.Any(i => i.FullName == typeof(ICommand).FullName);
@@ -80,12 +80,12 @@ namespace ItemService.Testing
       if (!scopedExists || !singletonExists || !icommandExists || !iqueryExists)
       {
         Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.WriteLine("Ã¢Å¡Â Ã¯Â¸Â  Warning: Some Franz.Common.* or Mediator interfaces were NOT found in the architecture graph.");
-        if (!scopedExists) Console.WriteLine("   Ã¢Å¾Å“ Missing: Franz.Common.DependencyInjection.IScopedDependency");
-        if (!singletonExists) Console.WriteLine("   Ã¢Å¾Å“ Missing: Franz.Common.DependencyInjection.ISingletonDependency");
-        if (!icommandExists) Console.WriteLine("   Ã¢Å¾Å“ Missing: Franz.Common.Mediator.Messages.ICommand");
-        if (!iqueryExists) Console.WriteLine("   Ã¢Å¾Å“ Missing: Franz.Common.Mediator.Messages.IQuery<>");
-        if (!customreposexist) Console.WriteLine("   Ã¢Å¾Å“ Non Existant: Custom Repository types this architecture runs with Franz.Common Preordained entity and aggregate repos (e.g., IBookRepository)");
+        Console.WriteLine("⚠️  Warning: Some Franz.Common.* or Mediator interfaces were NOT found in the architecture graph.");
+        if (!scopedExists) Console.WriteLine("   ➔ Missing: Franz.Common.DependencyInjection.IScopedDependency");
+        if (!singletonExists) Console.WriteLine("   ➔ Missing: Franz.Common.DependencyInjection.ISingletonDependency");
+        if (!icommandExists) Console.WriteLine("   ➔ Missing: Franz.Common.Mediator.Messages.ICommand");
+        if (!iqueryExists) Console.WriteLine("   ➔ Missing: Franz.Common.Mediator.Messages.IQuery<>");
+        if (!customreposexist) Console.WriteLine("   ➔ Non Existant: Custom Repository types this architecture runs with Franz.Common Preordained entity and aggregate repos (e.g., IBookRepository)");
         Console.WriteLine("   Hint: Ensure Franz.Common*.dll are copied to the test output (bin) folder.");
         Console.ResetColor();
       }
@@ -108,9 +108,9 @@ namespace ItemService.Testing
       SolutionPrefix = solutionPrefix;
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // --------------------------------------------------------------------------------------------------------------------
     // Public static fields used throughout
-    // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // --------------------------------------------------------------------------------------------------------------------
     protected static Assembly? DomainAssembly;
     protected static Assembly? ApplicationAssembly;
     protected static Assembly? PersistenceAssembly;
@@ -142,23 +142,23 @@ namespace ItemService.Testing
     protected static bool HasDomainEvents;
     protected static bool HasEventHandlers;
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // --------------------------------------------------------------------------------------------------------------------
     // Helpers (shared)
-    // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // --------------------------------------------------------------------------------------------------------------------
     protected static void ReportArchitectureContext()
     {
-      Console.WriteLine("Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â");
-      Console.WriteLine($" Ã¢Å¡â€“Ã¯Â¸Â  ItemService GOVERNANCE Ã¢â‚¬â€ {SolutionPrefix}");
-      Console.WriteLine("Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â");
-      Console.WriteLine($"Ã°Å¸â€œÂ¦ Assemblies:");
-      Console.WriteLine($"   Ã¢â‚¬Â¢ Domain:       {DomainAssembly?.GetName().Name ?? "N/A"}");
-      Console.WriteLine($"   Ã¢â‚¬Â¢ Application:  {ApplicationAssembly?.GetName().Name ?? "N/A"}");
-      Console.WriteLine($"   Ã¢â‚¬Â¢ Persistence:  {PersistenceAssembly?.GetName().Name ?? "N/A"}");
-      Console.WriteLine($"   Ã¢â‚¬Â¢ API:          {ApiAssembly?.GetName().Name ?? "N/A"}");
-      Console.WriteLine($"   Ã¢â‚¬Â¢ Contracts:    {ContractsAssembly?.GetName().Name ?? "N/A"}");
-      Console.WriteLine($"Ã°Å¸Â§Â© Domain Events:  {DomainEventTypes.Count}");
-      Console.WriteLine($"Ã°Å¸Â§Â© Handlers:       {ApplicationEventHandlerTypes.Count}");
-      Console.WriteLine("Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â\n");
+      Console.WriteLine("══════════════════════════════════════════════════");
+      Console.WriteLine($" ⚙️  ItemService GOVERNANCE — {SolutionPrefix}");
+      Console.WriteLine("══════════════════════════════════════════════════");
+      Console.WriteLine($"📦 Assemblies:");
+      Console.WriteLine($"   • Domain:       {DomainAssembly?.GetName().Name ?? "N/A"}");
+      Console.WriteLine($"   • Application:  {ApplicationAssembly?.GetName().Name ?? "N/A"}");
+      Console.WriteLine($"   • Persistence:  {PersistenceAssembly?.GetName().Name ?? "N/A"}");
+      Console.WriteLine($"   • API:          {ApiAssembly?.GetName().Name ?? "N/A"}");
+      Console.WriteLine($"   • Contracts:    {ContractsAssembly?.GetName().Name ?? "N/A"}");
+      Console.WriteLine($"🧩 Domain Events:  {DomainEventTypes.Count}");
+      Console.WriteLine($"🧩 Handlers:       {ApplicationEventHandlerTypes.Count}");
+      Console.WriteLine("══════════════════════════════════════════════════\n");
     }
 
     protected static bool SkipIfLayerMissing(IObjectProvider<IType> layer, string name)
@@ -166,7 +166,7 @@ namespace ItemService.Testing
       var count = layer.GetObjects(BaseArchitecture).Count();
       if (count == 0)
       {
-        Console.WriteLine($"Ã°Å¸Å¸Â¡ {name} Ã¢â‚¬â€ no types found (virgin template). Skipping.");
+        Console.WriteLine($"🧱 {name} — no types found (virgin template). Skipping.");
         return true;
       }
       return false;
@@ -176,7 +176,7 @@ namespace ItemService.Testing
     {
       if (asm == null)
       {
-        Console.WriteLine($"Ã°Å¸Å¸Â¡ {name} Ã¢â‚¬â€ assembly not found. Skipping.");
+        Console.WriteLine($"🧱 {name} — assembly not found. Skipping.");
         return false;
       }
       return true;
@@ -188,7 +188,7 @@ namespace ItemService.Testing
       ApplicationEventHandlerTypes = new List<IType>();
       HasDomainEvents = false;
       HasEventHandlers = false;
-      Console.WriteLine("Ã°Å¸â€â€ž Architecture state reset.");
+      Console.WriteLine("🔄 Architecture state reset.");
     }
 
     protected static string GetNamespaceSummary()
@@ -203,9 +203,9 @@ namespace ItemService.Testing
       return string.Join(", ", all);
     }
 
-    // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // --------------------------------------------------------------------------------------------------------------------
     // Private helpers
-    // Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+    // --------------------------------------------------------------------------------------------------------------------
     private static Assembly? TryResolveAssembly(string suffix)
     {
       // Try to find an already loaded assembly by suffix
@@ -225,11 +225,11 @@ namespace ItemService.Testing
         try
         {
           asm = Assembly.LoadFrom(file);
-          Console.WriteLine($"Ã°Å¸â€œÂ¦ Late-loaded assembly: {asm.GetName().Name}");
+          Console.WriteLine($"📦 Late-loaded assembly: {asm.GetName().Name}");
         }
         catch (Exception ex)
         {
-          Console.WriteLine($"Ã¢Å¡Â Ã¯Â¸Â Could not load {suffix}.dll Ã¢â‚¬â€ {ex.Message}");
+          Console.WriteLine($"⚠️  Could not load {suffix}.dll — {ex.Message}");
         }
       }
       return asm;
@@ -251,16 +251,16 @@ namespace ItemService.Testing
           if (!AppDomain.CurrentDomain.GetAssemblies().Any(a => a.GetName().FullName == asmName.FullName))
           {
             var asm = Assembly.LoadFrom(file);
-            Console.WriteLine($"Ã°Å¸â€œÂ¦ Manually loaded {asm.GetName().Name}");
+            Console.WriteLine($"📦 Manually loaded {asm.GetName().Name}");
           }
         }
         catch (BadImageFormatException)
         {
-          Console.WriteLine($"Ã°Å¸Â§Â± Skipped non-.NET assembly: {Path.GetFileName(file)}");
+          Console.WriteLine($"🧱 Skipped non-.NET assembly: {Path.GetFileName(file)}");
         }
         catch (Exception ex)
         {
-          Console.WriteLine($"Ã¢Å¡Â Ã¯Â¸Â Skipped {Path.GetFileName(file)} Ã¢â‚¬â€ {ex.Message}");
+          Console.WriteLine($"⚠️  Skipped {Path.GetFileName(file)} — {ex.Message}");
         }
       }
     }
@@ -290,6 +290,3 @@ namespace ItemService.Testing
     }
   }
 }
-
-
-
