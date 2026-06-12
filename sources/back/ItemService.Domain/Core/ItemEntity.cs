@@ -1,7 +1,9 @@
 ﻿using ItemService.Domain.Core;
 using ItemService.Domain.Items.Core;
 
-public sealed class Item : Entity<Guid>
+namespace ItemService.Domain.Items.Core;
+
+public sealed class ItemEntity : Entity<Guid>
 {
   public string Name { get; private set; } = null!;
 
@@ -17,7 +19,7 @@ public sealed class Item : Entity<Guid>
 
   public ItemBehaviouralCondition? Condition { get; private set; }
 
-  private Item()
+  private ItemEntity()
   {
   }
 
