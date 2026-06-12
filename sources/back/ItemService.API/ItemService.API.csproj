@@ -34,7 +34,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Clients\" />
     <Folder Include="Controllers\NewFolder\" />
+    <Folder Include="Extensions\" />
     <Folder Include="logs\" />
   </ItemGroup>
 
