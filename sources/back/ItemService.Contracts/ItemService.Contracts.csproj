@@ -3,6 +3,13 @@
   <Import Project="../../../common.targets" />
 
   <ItemGroup>
+    <Compile Remove="Features\**" />
+    <EmbeddedResource Remove="Features\**" />
+    <None Remove="Features\**" />
+    <PackageVersion Remove="Features\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Franz.Common.Business" />
     <PackageReference Include="Franz.Common.Caching" />
     <PackageReference Include="Franz.Common.Mediator" />
@@ -11,13 +18,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ItemService.Domain\ItemService.Domain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Features\Example\Commands\" />
-    <Folder Include="Features\Example\Queries\" />
-    <Folder Include="Features\Example\Persistence\" />
-    <Folder Include="Features\Example\Infrastructure\" />
   </ItemGroup>
 
 </Project>
