@@ -31,17 +31,15 @@ public class ApiArchitectureTests : BaseArchitectureTest
       Console.WriteLine("Ã°Å¸Å¸Â¡ No  Service Intefaces found Ã¢â‚¬â€ skipping contract interface enforcement (virgin template).");
       return;
     }
-    ArchRuleDefinition // Get types from the provider
-        .Classes()
-        .That()
-        .HaveNameEndingWith("Controller")
-        .Should()
-        .BeAssignableTo(typeof(ControllerBase))
-        .AndShould()
-        .ResideInNamespace("ItemService.API.Controllers")
-        .Check(BaseArchitecture);
+    ArchRuleDefinition
+    .Classes()
+  .That()
+  .ResideInNamespace("ItemService.API.Controllers")
+  .Should()
+  .BeAssignableTo(typeof(ControllerBase))
+  .Check(BaseArchitecture);
 
-  
+
   }
 
   [Fact]

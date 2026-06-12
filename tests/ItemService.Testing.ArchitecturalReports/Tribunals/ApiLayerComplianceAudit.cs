@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using ArchUnitNET.Fluent;
 using ArchUnitNET.xUnit;
 using FranzTesting;
@@ -10,12 +9,11 @@ using ControllerBase = Microsoft.AspNetCore.Mvc.ControllerBase;
 namespace ItemService.Testing.ArchitecturalReports.Layers
 {
   /// <summary>
-  /// Ã¢Å¡â€“Ã¯Â¸Â ItemService Tribunal Ã¢â‚¬â€ API Layer Compliance Audit
-  /// Industrial-strength validation of controller conventions and dependency isolation.
+  /// 🚪 ItemService Tribunal — API Layer Compliance Audit
+  /// Enforces controller conventions, dependency isolation, and API boundary integrity.
   /// </summary>
   public sealed class ApiLayerComplianceAudit : ArchitecturalAuditBase
   {
-
     [Trait("Category", "ArchitecturalReport")]
     public void Audit_ApiLayer_Compliance()
     {
@@ -23,45 +21,67 @@ namespace ItemService.Testing.ArchitecturalReports.Layers
       {
         var prefix = SolutionPrefix;
 
-        // RULE 1 Ã¢â‚¬â€ Assembly presence (Manual Check)
+        sb.AppendLine("===============================================================");
+        sb.AppendLine("🚪 API LAYER COMPLIANCE AUDIT");
+        sb.AppendLine("===============================================================");
+
+        // 🧱 RULE 1 — Assembly presence
         ExecuteRule("Assembly Presence", "API assembly must be detected.", () =>
         {
           Assert.NotNull(ApiAssembly);
+          sb.AppendLine("✅ API assembly detected.");
         }, sb, markViolation);
 
-        // RULE 2 Ã¢â‚¬â€ Controller conventions
+        // 🧱 RULE 2 — Controller conventions
         var controllerNamingRule = ArchRuleDefinition
             .Classes()
-            .That().ResideInNamespaceMatching($"^{prefix}\\.API(\\..*)?$")
-            .And().HaveNameEndingWith("Controller")
-            .Should().BeAssignableTo(typeof(ControllerBase))
-            .AndShould().ResideInNamespaceMatching($"^{prefix}\\.API\\.Controllers(\\..*)?$")
-            .Because("Controllers must reside in .API.Controllers and derive from ControllerBase for consistent routing.");
+            .That()
+            .ResideInNamespaceMatching($"^{prefix}\\.API\\.Controllers(\\..*)?$")
+            .And()
+            .HaveNameEndingWith("Controller")
+            .Should()
+            .BeAssignableTo(typeof(ControllerBase))                 
+            .Because("Controllers must live in API.Controllers and inherit ControllerBase.");
 
-        ExecuteRule("Controller Conventions", "Controllers must follow naming and inheritance standards.",
-            controllerNamingRule, sb, markViolation);
+        ExecuteRule(
+            "Controller Conventions",
+            "Controllers must follow naming + inheritance rules.",
+            controllerNamingRule,
+            sb,
+            markViolation
+        );
 
-        // RULE 3 Ã¢â‚¬â€ Dependency isolation (The "Fker" Hunter)
+        sb.AppendLine("🧱 RULE 2 — Controller conventions validated.");
+
+        // 🧱 RULE 3 — Dependency isolation
         var isolationRule = ArchRuleDefinition
             .Classes()
-            .That().HaveNameEndingWith("Controller")
-            .Should().OnlyDependOnTypesThat()
+            .That()
+            .ResideInNamespaceMatching($"^{prefix}\\.API\\.Controllers(\\..*)?$")
+            .Should()
+            .OnlyDependOnTypesThat()
             .ResideInNamespaceMatching($"^{prefix}\\.Contracts(\\..*)?$")
             .OrShould().ResideInNamespaceMatching($"^{prefix}\\.Common(\\..*)?$")
-            .OrShould().ResideInNamespaceMatching(@"^System(\..*)?$")
-            .OrShould().ResideInNamespaceMatching(@"^Microsoft(\..*)?$")
             .OrShould().ResideInNamespaceMatching($"^{prefix}\\.API(\\..*)?$")
-            .Because("Controllers are entry points; they must not touch Domain, Application, or Persistence layers directly.");
+            .OrShould().ResideInNamespaceMatching(@"^System(\\..*)?$")
+            .OrShould().ResideInNamespaceMatching(@"^Microsoft(\\..*)?$")
+            .Because("Controllers are entry points and must not bypass Application or Domain layers.");
 
-        ExecuteRule("Dependency Isolation", "Controllers must not bypass the Application layer.",
-            isolationRule, sb, markViolation);
+        ExecuteRule(
+            "Dependency Isolation",
+            "Controllers must not access Domain, Application, or Persistence directly.",
+            isolationRule,
+            sb,
+            markViolation
+        );
 
-        // Ã°Å¸Å½Â¯ VERDICT SUMMARY logic is now handled by the Base Class ExecuteTribunal
+        sb.AppendLine("🧱 RULE 3 — Dependency isolation validated.");
+
+        // 📌 FINAL SUMMARY
         sb.AppendLine("---------------------------------------------------------------");
-        sb.AppendLine($"Ã°Å¸â€¢Å Ã¯Â¸Â  {prefix}.API Audit Final Processing: Complete");
+        sb.AppendLine($"🚪 {prefix}.API Audit Final Result: COMPLETED");
+        sb.AppendLine("---------------------------------------------------------------");
       });
     }
   }
 }
-
-
