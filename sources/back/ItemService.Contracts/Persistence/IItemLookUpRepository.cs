@@ -6,25 +6,25 @@ namespace ItemService.Contracts.Persistence;
 
 public interface IItemLookupRepository : IScopedDependency
 {
-  Task<PagedResult<Item>> GetByCategoryAsync(
+  Task<PagedResult<ItemEntity>> GetByCategoryAsync(
       ItemCategory category,
       int page,
       int pageSize,
       CancellationToken cancellationToken = default);
 
-  Task<PagedResult<Item>> GetByMythologyAsync(
+  Task<PagedResult<ItemEntity>> GetByMythologyAsync(
       ItemMythology mythology,
       int page,
       int pageSize,
       CancellationToken cancellationToken = default);
 
-  Task<PagedResult<Item>> GetByClassAffinityAsync(
+  Task<PagedResult<ItemEntity>> GetByClassAffinityAsync(
       ItemClass classAffinity,
       int page,
       int pageSize,
       CancellationToken cancellationToken = default);
 
-  Task<Item?> GetByNameAsync(
+  Task<ItemEntity?> GetByNameAsync(
       string name,
       CancellationToken cancellationToken = default);
 
