@@ -17,7 +17,7 @@ public sealed class ItemLookupRepository : IItemLookupRepository
   // =========================================================
   // CATEGORY
   // =========================================================
-  public async Task<PagedResult<Item>> GetByCategoryAsync(
+  public async Task<PagedResult<ItemEntity>> GetByCategoryAsync(
       ItemCategory category,
       int page,
       int pageSize,
@@ -33,7 +33,7 @@ public sealed class ItemLookupRepository : IItemLookupRepository
   // =========================================================
   // MYTHOLOGY
   // =========================================================
-  public async Task<PagedResult<Item>> GetByMythologyAsync(
+  public async Task<PagedResult<ItemEntity>> GetByMythologyAsync(
       ItemMythology mythology,
       int page,
       int pageSize,
@@ -49,7 +49,7 @@ public sealed class ItemLookupRepository : IItemLookupRepository
   // =========================================================
   // CLASS AFFINITY
   // =========================================================
-  public async Task<PagedResult<Item>> GetByClassAffinityAsync(
+  public async Task<PagedResult<ItemEntity>> GetByClassAffinityAsync(
       ItemClass classAffinity,
       int page,
       int pageSize,
@@ -65,7 +65,7 @@ public sealed class ItemLookupRepository : IItemLookupRepository
   // =========================================================
   // NAME (IDENTITY LOOKUP)
   // =========================================================
-  public async Task<Item?> GetByNameAsync(
+  public async Task<ItemEntity?> GetByNameAsync(
       string name,
       CancellationToken ct = default)
   {
@@ -77,8 +77,8 @@ public sealed class ItemLookupRepository : IItemLookupRepository
   // =========================================================
   // PAGINATION CORE
   // =========================================================
-  private static async Task<PagedResult<Item>> ToPaged(
-      IQueryable<Item> query,
+  private static async Task<PagedResult<ItemEntity>> ToPaged(
+      IQueryable<ItemEntity> query,
       int page,
       int pageSize,
       CancellationToken ct)
@@ -94,7 +94,7 @@ public sealed class ItemLookupRepository : IItemLookupRepository
         .Take(pageSize)
         .ToListAsync(ct);
 
-    return new PagedResult<Item>(
+    return new PagedResult<ItemEntity>(
         items,
         total,
         page,

@@ -15,7 +15,7 @@ public sealed class ApplicationDbContext : DbContextBase
   {
   }
 
-  public DbSet<Item> Items => Set<Item>();
+  public DbSet<ItemEntity> Items => Set<ItemEntity>();
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -26,7 +26,7 @@ public sealed class ApplicationDbContext : DbContextBase
 
   private static void ConfigureItem(ModelBuilder modelBuilder)
   {
-    modelBuilder.Entity<Item>(builder =>
+    modelBuilder.Entity<ItemEntity>(builder =>
     {
       builder.ToTable("Items");
 
@@ -57,7 +57,7 @@ public sealed class ApplicationDbContext : DbContextBase
   }
 
   private static void ConfigureCondition(
-      EntityTypeBuilder<Item> builder)
+      EntityTypeBuilder<ItemEntity> builder)
   {
     builder.OwnsOne(x => x.Condition, condition =>
     {
@@ -77,7 +77,7 @@ public sealed class ApplicationDbContext : DbContextBase
   }
 
   private static void ConfigureBaseStats(
-      EntityTypeBuilder<Item> builder)
+      EntityTypeBuilder<ItemEntity> builder)
   {
     builder.OwnsOne(x => x.BaseStats, stats =>
     {
