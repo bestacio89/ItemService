@@ -7,6 +7,8 @@ using Microsoft.Extensions.Logging;
 using Franz.Common.Caching.Extensions;
 using Franz.Common.Caching.Options;
 using Franz.Common.EntityFramework.Extensions;
+using Franz.Common.Mediator.Extensions;
+using ItemService.Persistence.Seeding;
 
 namespace ItemService.Persistence;
 
@@ -41,22 +43,25 @@ public static class PersistenceServiceRegistration
       options.ConnectionString = configuration.GetConnectionString("Redis");
     });
 
-    services.AddFranzMediatorCaching(configuration, opt =>
-    {
-      var type = typeof(MediatorCachingOptions);
+    /* services.AddFranzMediatorCaching(configuration, opt =>
+     {
+       var type = typeof(MediatorCachingOptions);
 
-      type.GetProperty(nameof(MediatorCachingOptions.DefaultTtl))?
-          .SetValue(opt, TimeSpan.FromMinutes(5));
+       type.GetProperty(nameof(MediatorCachingOptions.DefaultTtl))?
+           .SetValue(opt, TimeSpan.FromMinutes(5));
 
-      type.GetProperty(nameof(MediatorCachingOptions.LogHitLevel))?
-          .SetValue(opt, LogLevel.Debug);
+       type.GetProperty(nameof(MediatorCachingOptions.LogHitLevel))?
+           .SetValue(opt, LogLevel.Debug);
 
-      type.GetProperty(nameof(MediatorCachingOptions.LogMissLevel))?
-          .SetValue(opt, LogLevel.Information);
-    });
-
+       type.GetProperty(nameof(MediatorCachingOptions.LogMissLevel))?
+           .SetValue(opt, LogLevel.Information);
+     });*/
+    services.AddUnitOfWork<ApplicationDbContext>();
+    services.AddFranzTransactionPipeline();
     services.AddCustomRepositoriesFromAssembly(typeof(ApplicationDbContext).Assembly);
     services.AddEntityRepositories<ApplicationDbContext>();
+    services.AddScoped<ISeeder, ItemSeeder>();
+    services.AddScoped<DatabaseSeeder>();
 
     return services;
   }

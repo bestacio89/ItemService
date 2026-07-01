@@ -7,24 +7,20 @@ using Franz.Common.Data;
 
 namespace ItemService.Persistence;
 
-public static class TemplateDatabaseSeeder
+public sealed class DatabaseSeeder
 {
-  /// <summary>
-  /// Executes all self-discovered ISeeder implementations sequentially based on their defined priority.
-  /// </summary>
-  public static void Run(IServiceProvider serviceProvider)
+  private readonly IEnumerable<ISeeder> _seeders;
+
+  public DatabaseSeeder(IEnumerable<ISeeder> seeders)
   {
-    var db = serviceProvider.GetRequiredService<ApplicationDbContext>();
+    _seeders = seeders;
+  }
 
-    // Relational schema migration safe-check
-    db.Database.Migrate();
-
-    // Self-discovered array resolution
-    var seeders = serviceProvider.GetServices<ISeeder>();
-
-    foreach (var seeder in seeders.OrderBy(s => s.Order))
+  public async Task RunAsync(CancellationToken ct)
+  {
+    foreach (var seeder in _seeders.OrderBy(x => x.Order))
     {
-      seeder.SeedAsync();
+      await seeder.SeedAsync(ct);
     }
   }
 }
