@@ -3,9 +3,13 @@
   <Import Project="../../../common.targets" />
 
   <ItemGroup>
+    <Compile Remove="Depots\**" />
     <Compile Remove="Semoirs\**" />
+    <EmbeddedResource Remove="Depots\**" />
     <EmbeddedResource Remove="Semoirs\**" />
+    <None Remove="Depots\**" />
     <None Remove="Semoirs\**" />
+    <PackageVersion Remove="Depots\**" />
     <PackageVersion Remove="Semoirs\**" />
   </ItemGroup>
 
@@ -28,10 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Configurations\" />
-    <Folder Include="Depots\" />
     <Folder Include="Migrations\" />
-    <Folder Include="Persistence\Extensions\" />
   </ItemGroup>
 
   <ItemGroup>
