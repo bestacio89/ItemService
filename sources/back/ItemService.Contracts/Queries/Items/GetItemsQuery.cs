@@ -3,4 +3,4 @@ using ItemService.Contracts.DTOs.Items;
 
 namespace ItemService.Contracts.Queries.Items;
 
-public sealed record GetAllItemsQuery : IQuery<IReadOnlyList<ItemDto>>;
+public sealed record GetAllItemsQuery : IQuery<IReadOnlyCollection<ItemDto>>;
