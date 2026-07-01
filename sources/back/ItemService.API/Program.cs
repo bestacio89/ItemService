@@ -52,9 +52,13 @@ app.Lifetime.ApplicationStopped.Register(Log.CloseAndFlush);
 // =========================================================================
 app.UseHttpArchitecture();
 
+//app.UseAuthorization();
 if (app.Environment.IsDevelopment())
 {
-  app.UseDocumentation();
+  app.UseEndpoints(endpoints =>
+  {
+    endpoints.MapControllers().AllowAnonymous();
+  });
 }
 
 var _ = app.MapControllers();
