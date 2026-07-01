@@ -28,4 +28,12 @@ public interface IItemLookupRepository : IScopedDependency
       string name,
       CancellationToken cancellationToken = default);
 
+  Task<ItemEntity?> GetByIdWithDetailsAsync(
+    Guid id,
+
+    CancellationToken cancellationToken = default);
+
+  Task<IReadOnlyCollection<ItemEntity?>> GetAllWithDetailsAsync(
+                   CancellationToken cancellationToken = default);
+
 }

@@ -25,6 +25,8 @@ public sealed class ItemLookupRepository : IItemLookupRepository
   {
     var query = _context.Items
         .AsNoTracking()
+        .Include(x => x.BaseStats)
+        .Include(x => x.Condition)
         .Where(x => x.Category == category);
 
     return await ToPaged(query, page, pageSize, ct);
@@ -41,6 +43,8 @@ public sealed class ItemLookupRepository : IItemLookupRepository
   {
     var query = _context.Items
         .AsNoTracking()
+        .Include(x => x.BaseStats)
+        .Include(x => x.Condition)
         .Where(x => x.Mythology == mythology);
 
     return await ToPaged(query, page, pageSize, ct);
@@ -57,6 +61,8 @@ public sealed class ItemLookupRepository : IItemLookupRepository
   {
     var query = _context.Items
         .AsNoTracking()
+        .Include(x => x.BaseStats)
+        .Include(x => x.Condition)
         .Where(x => x.ClassAffinity == classAffinity);
 
     return await ToPaged(query, page, pageSize, ct);
@@ -70,8 +76,23 @@ public sealed class ItemLookupRepository : IItemLookupRepository
       CancellationToken ct = default)
   {
     return await _context.Items
+        .Include(x => x.BaseStats)
+        .Include(x => x.Condition)
         .AsNoTracking()
+
         .FirstOrDefaultAsync(x => x.Name == name, ct);
+  }
+
+  public async Task<ItemEntity?> GetByIdWithDetailsAsync(
+     Guid id,
+     CancellationToken ct = default)
+  {
+    return await _context.Items
+        .Include(x => x.BaseStats)
+        .Include(x => x.Condition)
+        .AsNoTracking()
+
+        .FirstOrDefaultAsync(x => x.Id == id, ct);
   }
 
   // =========================================================
@@ -99,5 +120,17 @@ public sealed class ItemLookupRepository : IItemLookupRepository
         total,
         page,
         pageSize);
+  }
+
+  public async Task<IReadOnlyCollection<ItemEntity?>> GetAllWithDetailsAsync(
+         CancellationToken ct = default)
+  {
+    var query = await _context.Items
+        .AsNoTracking()
+        .Include(x => x.BaseStats)
+        .ToListAsync();
+        
+
+    return query;
   }
 }
