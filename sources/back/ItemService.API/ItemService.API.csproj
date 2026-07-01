@@ -22,6 +22,10 @@
     <PackageReference Include="Franz.Common.Http.EntityFramework" />
     <PackageReference Include="Franz.Common.Mediator.Polly" />
     <PackageReference Include="Franz.Common.Mediator.OpenTelemetry" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
