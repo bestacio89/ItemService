@@ -1,4 +1,5 @@
-﻿using ItemService.Contracts.Commands.Items;
+﻿using Franz.Common.DependencyInjection;
+using ItemService.Contracts.Commands.Items;
 
 namespace ItemService.Application.Items.Services;
 

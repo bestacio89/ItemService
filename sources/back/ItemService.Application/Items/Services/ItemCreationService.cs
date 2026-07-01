@@ -1,5 +1,6 @@
 ﻿using Franz.Common.Business.Domain.Factories;
 using Franz.Common.Business.Repositories;
+using Franz.Common.Errors;
 using ItemService.Contracts.Commands.Items;
 using ItemService.Domain.Core;
 using ItemService.Domain.Items.Core;
@@ -38,7 +39,9 @@ public sealed class ItemCreationService : IItemCreationService
     if (await _uniquenessChecker.ExistsByNameAsync(request.Name, ct))
       throw new InvalidOperationException(
           $"An item with name '{request.Name}' already exists.");
-
+    if (String.IsNullOrWhiteSpace(request.Name))
+      throw new TechnicalException(
+          $"An item requires a name");
     var item = _itemFactory.Create();
 
     var heroModifier = BuildHeroModifier(request);
