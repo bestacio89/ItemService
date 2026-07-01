@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ItemService.API.Controllers;
 
 [ApiController]
-[Route("api/items")]
+[Route("items")]
 public sealed class ItemController : ControllerBase
 {
   private readonly IDispatcher _dispatcher;
@@ -22,9 +22,7 @@ public sealed class ItemController : ControllerBase
   // =========================================================
   [HttpGet]
   public async Task<IActionResult> GetAll(
-      int page = 1,
-      int pageSize = 20,
-      CancellationToken ct = default)
+        CancellationToken ct = default)
   {
     var result = await _dispatcher.SendAsync(
         new GetAllItemsQuery());
