@@ -15,7 +15,7 @@ public sealed class ItemBaseStats : Entity<Guid>
   public ItemHeroStatModifier? HeroModifier { get; private set; }
   public ItemSkillStatModifier? SkillModifier { get; private set; }
 
-  private ItemBaseStats() { }
+  protected ItemBaseStats(Guid id) : base(id) { }
 
   public void Define(
       Guid itemId,

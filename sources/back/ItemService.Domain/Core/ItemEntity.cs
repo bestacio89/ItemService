@@ -19,9 +19,8 @@ public sealed class ItemEntity : Entity<Guid>
 
   public ItemBehaviouralCondition? Condition { get; private set; }
 
-  private ItemEntity()
-  {
-  }
+  protected ItemEntity(Guid id) : base(id) { }
+ 
 
   public void Define(
       string name,

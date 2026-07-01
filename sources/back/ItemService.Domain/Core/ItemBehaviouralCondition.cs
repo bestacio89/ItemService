@@ -1,6 +1,7 @@
 ﻿using Franz.Common.Business.Domain;
+using System.Text.Json.Serialization;
 
-namespace ItemService.Domain.Items.Core;
+namespace ItemService.Domain.Core;
 
 /// <summary>
 /// Describes the behavioural condition a hero must produce in combat
@@ -53,6 +54,8 @@ public sealed class ItemBehaviouralCondition : ValueObject
   /// Number of stacks required to trigger the passive.
   /// </summary>
   public int StackThreshold { get; }
+
+  [JsonConstructor]
 
   private ItemBehaviouralCondition(
       IReadOnlyList<int>? pattern,

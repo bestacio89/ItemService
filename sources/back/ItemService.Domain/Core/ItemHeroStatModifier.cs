@@ -23,7 +23,7 @@ public sealed record ItemHeroStatModifier(
 
     // DEFENSIVE PROFILE
     float? ArmorBonus,
-    float? MagicResistanceBonus,
+    float? MagicResistanceBonus, 
     float? DamageReductionBonus,
     float? ShieldStrengthMultiplierBonus,
 
