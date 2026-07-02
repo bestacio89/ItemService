@@ -7,24 +7,24 @@
     <!-- Franz Common Stack -->
     <!-- ===================== -->
     <PackageVersion Include="Franz.Common.*" Version="2.2.6" />
-    <PackageVersion Include="Franz.Common.Business" Version="2.2.15" />
-    <PackageVersion Include="Franz.Common.Caching" Version="2.2.15" />
-    <PackageVersion Include="Franz.Common.DependencyInjection" Version="2.2.15" />
-    <PackageVersion Include="Franz.Common.EntityFramework" Version="2.2.15" />
-    <PackageVersion Include="Franz.Common.EntityFramework.PostGres" Version="2.2.15" />
-    <PackageVersion Include="Franz.Common.Errors" Version="2.2.15" />
-    <PackageVersion Include="Franz.Common.Hosting" Version="2.2.15" />
-    <PackageVersion Include="Franz.Common.Http" Version="2.2.15" />
-    <PackageVersion Include="Franz.Common.Http.Bootstrap" Version="2.2.15" />
-    <PackageVersion Include="Franz.Common.Http.Client" Version="2.2.15" />
-    <PackageVersion Include="Franz.Common.Http.EntityFramework" Version="2.2.15" />
-    <PackageVersion Include="Franz.Common.Mediator" Version="2.2.15" />
-    <PackageVersion Include="Franz.Common.Mediator.Polly" Version="2.2.15" />
-    <PackageVersion Include="Franz.Common.Mediator.OpenTelemetry" Version="2.2.15" />
-    <PackageVersion Include="Franz.Common.Mapping" Version="2.2.15" />
-    <PackageVersion Include="Franz.Common.Messaging.Bootstrap" Version="2.2.15" />
-    <PackageVersion Include="Franz.Common.Messaging.EntityFramework" Version="2.2.15" />
-    <PackageVersion Include="Franz.Common.Messaging.KafKa" Version="2.2.15" />
+    <PackageVersion Include="Franz.Common.Business" Version="2.2.16" />
+    <PackageVersion Include="Franz.Common.Caching" Version="2.2.16" />
+    <PackageVersion Include="Franz.Common.DependencyInjection" Version="2.2.16" />
+    <PackageVersion Include="Franz.Common.EntityFramework" Version="2.2.16" />
+    <PackageVersion Include="Franz.Common.EntityFramework.PostGres" Version="2.2.16" />
+    <PackageVersion Include="Franz.Common.Errors" Version="2.2.16" />
+    <PackageVersion Include="Franz.Common.Hosting" Version="2.2.16" />
+    <PackageVersion Include="Franz.Common.Http" Version="2.2.16" />
+    <PackageVersion Include="Franz.Common.Http.Bootstrap" Version="2.2.16" />
+    <PackageVersion Include="Franz.Common.Http.Client" Version="2.2.16" />
+    <PackageVersion Include="Franz.Common.Http.EntityFramework" Version="2.2.16" />
+    <PackageVersion Include="Franz.Common.Mediator" Version="2.2.16" />
+    <PackageVersion Include="Franz.Common.Mediator.Polly" Version="2.2.16" />
+    <PackageVersion Include="Franz.Common.Mediator.OpenTelemetry" Version="2.2.16" />
+    <PackageVersion Include="Franz.Common.Mapping" Version="2.2.16" />
+    <PackageVersion Include="Franz.Common.Messaging.Bootstrap" Version="2.2.16" />
+    <PackageVersion Include="Franz.Common.Messaging.EntityFramework" Version="2.2.16" />
+    <PackageVersion Include="Franz.Common.Messaging.KafKa" Version="2.2.16" />
     <!-- ===================== -->
     <!-- ASP.NET Core (MODERN ONLY) -->
     <!-- ===================== -->
@@ -43,7 +43,7 @@
     <PackageVersion Include="Testcontainers" Version="2.2.0" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.2.3" />
     <PackageVersion Include="AspNetCoreRateLimit" Version="5.0.0" />
-    <PackageVersion Include="Refit" Version="12.1.0" />
+    <PackageVersion Include="Refit" Version="13.0.0" />
     <!-- ===================== -->
     <!-- Testing -->
     <!-- ===================== -->
