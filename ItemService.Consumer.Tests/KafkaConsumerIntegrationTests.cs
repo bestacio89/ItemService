@@ -43,12 +43,28 @@ public sealed class ConsumerContractTests
     }
 
     [Fact]
+    public void Process_DeserializesAndProcessesAnEntityPayload()
+    {
+        var processor = new GenericMessageProcessor<TestEntity>(
+            NullLogger<GenericMessageProcessor<TestEntity>>.Instance);
+
+        processor.Process(new Message("{\\"Name\\":\\"Valid Item\\"}"));
+    }
+
+    [Fact]
     public void Process_HandlesJsonNullWithoutThrowing()
     {
         var processor = new GenericMessageProcessor<ItemEntity>(
             NullLogger<GenericMessageProcessor<ItemEntity>>.Instance);
 
         processor.Process(new Message("null"));
+    }
+
+    private sealed class TestEntity : Entity<Guid>
+    {
+        public TestEntity() : base(Guid.NewGuid()) { }
+
+        public string Name { get; set; } = string.Empty;
     }
 
     [Fact]
