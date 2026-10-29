@@ -24,9 +24,8 @@ public sealed class ApplicationDbContextModelTests
     {
         using var context = CreateContext();
         var item = context.Model.FindEntityType(typeof(ItemEntity))!;
-        var index = Assert.Single(item.GetIndexes()
-            .Where(candidate => candidate.Properties.Any(property =>
-                property.Name == nameof(ItemEntity.Name))));
+        var index = Assert.Single(item.GetIndexes(), candidate =>
+            candidate.Properties.Any(property => property.Name == nameof(ItemEntity.Name)));
 
         Assert.True(index.IsUnique);
     }
@@ -49,8 +48,8 @@ public sealed class ApplicationDbContextModelTests
     {
         using var context = CreateContext();
         var stats = context.Model.FindEntityType(typeof(ItemService.Domain.Core.ItemBaseStats))!;
-        var index = Assert.Single(stats.GetIndexes()
-            .Where(candidate => candidate.Properties.Any(property => property.Name == "ItemId")));
+        var index = Assert.Single(stats.GetIndexes(), candidate =>
+            candidate.Properties.Any(property => property.Name == "ItemId"));
 
         Assert.True(index.IsUnique);
     }
