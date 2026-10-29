@@ -6,7 +6,7 @@ using Franz.Common.Messaging.Messages;
 
 namespace ItemService.Consumer.Processing
 {
-  public class GenericMessageProcessor<T> : IGenericMessageProcessor<T> where T : class, IEntity
+  public class GenericMessageProcessor<T> : IGenericMessageProcessor<T> where T : class, IEntity<Guid>
   {
     private readonly ILogger<GenericMessageProcessor<T>> _logger;
 
