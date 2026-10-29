@@ -1,0 +1,56 @@
+name: ItemService Tests
+
+on:
+  pull_request:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+
+concurrency:
+  group: itemservice-tests-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Restore, build, and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out pull request
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore solution from NuGet.org
+        run: dotnet restore ItemService.sln --source https://api.nuget.org/v3/index.json
+
+      - name: Test solution projects
+        run: >-
+          dotnet test ItemService.sln
+          --configuration Release
+          --no-restore
+          --logger "trx;LogFileName=solution-tests.trx"
+          --results-directory TestResults/Solution
+
+      - name: Test Consumer test project
+        run: >-
+          dotnet test ItemService.Consumer.Tests/ItemService.Consumer.Tests.csproj
+          --configuration Release
+          --source https://api.nuget.org/v3/index.json
+          --logger "trx;LogFileName=consumer-tests.trx"
+          --results-directory TestResults/Consumer
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: itemservice-test-results
+          path: TestResults/**/*.trx
+          if-no-files-found: warn
+          retention-days: 14
