@@ -1,4 +1,3 @@
-using System.Reflection;
 using Franz.Common.Messaging.Messages;
 using ItemService.Consumer.Processing;
 
@@ -20,7 +19,7 @@ public sealed class ConsumerContractTests
     [Fact]
     public void ProcessorAcceptsTheInstalledFranzMessageContract()
     {
-        var process = typeof(GenericMessageProcessor<>).GetMethod(nameof(GenericMessageProcessor<object>.Process));
+        var process = typeof(GenericMessageProcessor<>).GetMethod("Process");
 
         Assert.NotNull(process);
         Assert.Equal(typeof(void), process!.ReturnType);
@@ -32,7 +31,9 @@ public sealed class ConsumerContractTests
     {
         var processor = typeof(GenericMessageProcessor<>);
         var parameter = Assert.Single(processor.GetGenericArguments());
-        Assert.True(parameter.GetGenericParameterConstraints().Any(constraint =>
-            constraint.Name == "IEntity" && constraint.Namespace == "Franz.Common.Business.Domain"));
+
+        Assert.Contains(parameter.GetGenericParameterConstraints(), constraint =>
+            constraint.Name == "IEntity" &&
+            constraint.Namespace == "Franz.Common.Business.Domain");
     }
 }
