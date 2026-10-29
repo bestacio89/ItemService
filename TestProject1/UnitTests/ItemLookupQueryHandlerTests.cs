@@ -75,6 +75,7 @@ public sealed class ItemLookupQueryHandlerTests
             handler.Handle(new GetItemByNameQuery("Unknown Relic", cancellation.Token), cancellation.Token));
 
         Assert.Contains("Unknown Relic", error.Message, StringComparison.Ordinal);
+        repository.Verify(value => value.GetByNameAsync("Unknown Relic", cancellation.Token), Times.Once);
         mapper.VerifyNoOtherCalls();
         repository.VerifyNoOtherCalls();
     }
