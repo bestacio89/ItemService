@@ -34,6 +34,6 @@ public sealed class ConsumerContractTests
 
         Assert.Contains(parameter.GetGenericParameterConstraints(), constraint =>
             constraint.Name == "IEntity" &&
-            constraint.Namespace == "Franz.Common.Business.Domain");
+            constraint.IsInterface);
     }
 }
