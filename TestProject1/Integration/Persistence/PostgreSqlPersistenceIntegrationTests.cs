@@ -6,6 +6,7 @@ using ItemService.Persistence;
 using ItemService.Persistence.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Moq;
+using Npgsql;
 using Testcontainers.PostgreSql;
 
 namespace ItemService.Testing.Integration.Persistence;
@@ -15,19 +16,8 @@ public sealed class PostgreSqlPersistenceIntegrationTests
     [Fact]
     public async Task ItemAndStatsPersistAndReloadWithConditionAndOwnedModifiers()
     {
-        await using var postgres = new PostgreSqlBuilder()
-            .WithDatabase("itemservice_integration")
-            .WithUsername("itemservice")
-            .WithPassword("itemservice")
-            .Build();
-
-        await postgres.StartAsync();
-
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseNpgsql(postgres.GetConnectionString())
-            .Options;
-
-        await using var context = new ApplicationDbContext(options, Mock.Of<IDispatcher>());
+        await using var postgres = await StartPostgresAsync();
+        await using var context = CreateContext(postgres.GetConnectionString());
         await context.Database.EnsureCreatedAsync();
 
         var itemId = Guid.NewGuid();
@@ -74,6 +64,80 @@ public sealed class PostgreSqlPersistenceIntegrationTests
         Assert.Equal(1, byClass.TotalCount);
         Assert.Single(all);
         Assert.Equal(itemId, Assert.Single(all)!.Id);
+    }
+
+    [Fact]
+    public async Task DatabaseRejectsDuplicateItemNames()
+    {
+        await using var postgres = await StartPostgresAsync();
+        await using var context = CreateContext(postgres.GetConnectionString());
+        await context.Database.EnsureCreatedAsync();
+
+        context.Items.Add(CreatePersistableItem("Duplicate Relic"));
+        await context.SaveChangesAsync();
+
+        context.Items.Add(CreatePersistableItem("Duplicate Relic"));
+
+        var error = await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+
+        Assert.IsType<PostgresException>(error.InnerException);
+        Assert.Equal(PostgresErrorCodes.UniqueViolation, ((PostgresException)error.InnerException!).SqlState);
+    }
+
+    [Fact]
+    public async Task DeletingAnItemCascadesToItsRequiredStatsRow()
+    {
+        await using var postgres = await StartPostgresAsync();
+        await using var context = CreateContext(postgres.GetConnectionString());
+        await context.Database.EnsureCreatedAsync();
+
+        var item = CreatePersistableItem("Cascade Relic");
+        context.Items.Add(item);
+        await context.SaveChangesAsync();
+
+        var statsId = item.BaseStats.Id;
+        Assert.Equal(1, await context.Set<ItemBaseStats>().CountAsync());
+
+        context.Items.Remove(item);
+        await context.SaveChangesAsync();
+
+        Assert.False(await context.Items.AnyAsync(value => value.Id == item.Id));
+        Assert.False(await context.Set<ItemBaseStats>().AnyAsync(value => value.Id == statsId));
+    }
+
+    private static async Task<PostgreSqlContainer> StartPostgresAsync()
+    {
+        var postgres = new PostgreSqlBuilder()
+            .WithDatabase("itemservice_integration")
+            .WithUsername("itemservice")
+            .WithPassword("itemservice")
+            .Build();
+
+        await postgres.StartAsync();
+        return postgres;
+    }
+
+    private static ApplicationDbContext CreateContext(string connectionString)
+    {
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseNpgsql(connectionString)
+            .Options;
+
+        return new ApplicationDbContext(options, Mock.Of<IDispatcher>());
+    }
+
+    private static ItemEntity CreatePersistableItem(string name)
+    {
+        var id = Guid.NewGuid();
+        var stats = CreateStats();
+        stats.Define(id,
+            new ItemHeroStatModifier(1, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null),
+            null,
+            "integration-test");
+        var item = CreateItem(id);
+        item.Define(name, ItemCategory.Relic, ItemMythology.Norse,
+            ItemClass.Mage, null, stats, null, "integration-test");
+        return item;
     }
 
     private static ItemEntity CreateItem(Guid id) =>
