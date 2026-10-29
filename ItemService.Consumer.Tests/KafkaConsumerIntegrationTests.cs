@@ -48,7 +48,7 @@ public sealed class ConsumerContractTests
         var processor = new GenericMessageProcessor<TestEntity>(
             NullLogger<GenericMessageProcessor<TestEntity>>.Instance);
 
-        processor.Process(new Message("{\\"Name\\":\\"Valid Item\\"}"));
+        processor.Process(new Message("""{"Name":"Valid Item"}"""));
     }
 
     [Fact]
