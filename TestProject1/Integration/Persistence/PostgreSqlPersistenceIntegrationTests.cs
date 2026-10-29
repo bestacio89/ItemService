@@ -3,6 +3,7 @@ using Franz.Common.Mediator.Dispatchers;
 using ItemService.Domain.Core;
 using ItemService.Domain.Items.Core;
 using ItemService.Persistence;
+using ItemService.Persistence.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using Testcontainers.PostgreSql;
@@ -53,6 +54,26 @@ public sealed class PostgreSqlPersistenceIntegrationTests
         Assert.Equal(condition, reloaded.Condition);
         Assert.Equal(125, reloaded.BaseStats.HeroModifier!.HealthBonus);
         Assert.Equal(30, reloaded.BaseStats.SkillModifier!.DamageBonus);
+
+        var repository = new ItemLookupRepository(context);
+        var byName = await repository.GetByNameAsync("Integration Relic");
+        var byId = await repository.GetByIdWithDetailsAsync(itemId);
+        var byCategory = await repository.GetByCategoryAsync(ItemCategory.Relic, page: 1, pageSize: 1);
+        var byMythology = await repository.GetByMythologyAsync(ItemMythology.Norse, page: 0, pageSize: 0);
+        var byClass = await repository.GetByClassAffinityAsync(ItemClass.Mage, page: 1, pageSize: 10);
+        var all = await repository.GetAllWithDetailsAsync();
+
+        Assert.Equal(itemId, byName!.Id);
+        Assert.Equal(itemId, byId!.Id);
+        Assert.Equal(1, byCategory.TotalCount);
+        Assert.Equal(1, byCategory.Page);
+        Assert.Equal(1, byCategory.PageSize);
+        Assert.Equal(1, byMythology.TotalCount);
+        Assert.Equal(1, byMythology.Page);
+        Assert.Equal(20, byMythology.PageSize);
+        Assert.Equal(1, byClass.TotalCount);
+        Assert.Single(all);
+        Assert.Equal(itemId, Assert.Single(all)!.Id);
     }
 
     private static ItemEntity CreateItem(Guid id) =>
