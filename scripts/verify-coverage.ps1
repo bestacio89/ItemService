@@ -3,7 +3,7 @@ param(
     [string] $CoverageRoot,
 
     [Parameter(Mandatory = $false)]
-    [double] $MinimumLineRate = 0.25
+    [double] $MinimumLineRate = 0.29
 )
 
 $ErrorActionPreference = "Stop"
