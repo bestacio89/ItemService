@@ -18,44 +18,44 @@ public sealed class ItemHttpClient : IItemHttpClient
   public async Task<IReadOnlyList<ItemDto>> GetAllAsync(int page, int pageSize, CancellationToken ct = default)
   {
     return await _http.GetFromJsonAsync<IReadOnlyList<ItemDto>>(
-      $"api/items?page={page}&pageSize={pageSize}", ct
+      $"items?page={page}&pageSize={pageSize}", ct
     ) ?? [];
   }
 
   public async Task<IReadOnlyList<ItemDto>> GetByCategoryAsync(ItemCategory category, int page, int pageSize, CancellationToken ct = default)
   {
     return await _http.GetFromJsonAsync<IReadOnlyList<ItemDto>>(
-      $"api/items/category/{category}?page={page}&pageSize={pageSize}", ct
+      $"items/category/{category}?page={page}&pageSize={pageSize}", ct
     ) ?? [];
   }
 
   public async Task<IReadOnlyList<ItemDto>> GetByClassAsync(ItemClass classAffinity, int page, int pageSize, CancellationToken ct = default)
   {
     return await _http.GetFromJsonAsync<IReadOnlyList<ItemDto>>(
-      $"api/items/class/{classAffinity}?page={page}&pageSize={pageSize}", ct
+      $"items/class/{classAffinity}?page={page}&pageSize={pageSize}", ct
     ) ?? [];
   }
 
   public async Task<IReadOnlyList<ItemDto>> GetByMythologyAsync(ItemMythology mythology, int page, int pageSize, CancellationToken ct = default)
   {
     return await _http.GetFromJsonAsync<IReadOnlyList<ItemDto>>(
-      $"api/items/mythology/{mythology}?page={page}&pageSize={pageSize}", ct
+      $"items/mythology/{mythology}?page={page}&pageSize={pageSize}", ct
     ) ?? [];
   }
 
   public async Task<ItemDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
   {
-    return await _http.GetFromJsonAsync<ItemDto>($"api/items/{id}", ct);
+    return await _http.GetFromJsonAsync<ItemDto>($"items/{id}", ct);
   }
 
   public async Task<ItemDto?> GetByNameAsync(string name, CancellationToken ct = default)
   {
-    return await _http.GetFromJsonAsync<ItemDto>($"api/items/name/{name}", ct);
+    return await _http.GetFromJsonAsync<ItemDto>($"items/by-name/{Uri.EscapeDataString(name)}", ct);
   }
 
   public async Task<Guid> CreateAsync(CreateItemCommand command, CancellationToken ct = default)
   {
-    var response = await _http.PostAsJsonAsync("api/items", command, ct);
+    var response = await _http.PostAsJsonAsync("items", command, ct);
     response.EnsureSuccessStatusCode();
 
     return await response.Content.ReadFromJsonAsync<Guid>(cancellationToken: ct);
@@ -63,7 +63,7 @@ public sealed class ItemHttpClient : IItemHttpClient
 
   public async Task DeleteAsync(Guid id, CancellationToken ct = default)
   {
-    var response = await _http.DeleteAsync($"api/items/{id}", ct);
+    var response = await _http.DeleteAsync($"items/{id}", ct);
     response.EnsureSuccessStatusCode();
   }
 }
