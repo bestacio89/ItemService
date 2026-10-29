@@ -62,6 +62,9 @@ jobs:
           --logger "trx;LogFilePrefix=consumer"
           --results-directory TestResults/Consumer
 
+      - name: Enforce consumer processor line coverage
+        run: pwsh ./scripts/verify-consumer-coverage.ps1 -CoverageRoot TestResults/Consumer -MinimumLineRate 0.80
+
       - name: Upload test and coverage reports
         if: always()
         uses: actions/upload-artifact@v4
