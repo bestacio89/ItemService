@@ -1,5 +1,8 @@
 using Franz.Common.Messaging.Messages;
 using ItemService.Consumer.Processing;
+using ItemService.Domain.Items.Core;
+using Microsoft.Extensions.Logging.Abstractions;
+using Newtonsoft.Json;
 
 namespace ItemService.Consumer.Tests;
 
@@ -35,5 +38,23 @@ public sealed class ConsumerContractTests
         Assert.Contains(parameter.GetGenericParameterConstraints(), constraint =>
             constraint.Name == "IEntity" &&
             constraint.IsInterface);
+    }
+
+    [Fact]
+    public void Process_HandlesJsonNullWithoutThrowing()
+    {
+        var processor = new GenericMessageProcessor<ItemEntity>(
+            NullLogger<GenericMessageProcessor<ItemEntity>>.Instance);
+
+        processor.Process(new Message("null"));
+    }
+
+    [Fact]
+    public void Process_RethrowsMalformedJsonForRetryOrDeadLetterHandling()
+    {
+        var processor = new GenericMessageProcessor<ItemEntity>(
+            NullLogger<GenericMessageProcessor<ItemEntity>>.Instance);
+
+        Assert.Throws<JsonReaderException>(() => processor.Process(new Message("{")));
     }
 }
