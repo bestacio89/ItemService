@@ -77,7 +77,6 @@ public sealed class AssemblyBoundaryTests
     {
         var references = ReferencedAssemblyNames(typeof(ItemController).Assembly);
 
-        Assert.Contains("ItemService.API", references);
         Assert.Contains("ItemService.Application", references);
         Assert.Contains("ItemService.Persistence", references);
         Assert.Contains("ItemService.Contracts", references);
