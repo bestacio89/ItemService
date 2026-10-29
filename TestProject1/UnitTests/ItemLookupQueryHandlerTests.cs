@@ -18,16 +18,11 @@ public sealed class ItemLookupQueryHandlerTests
         using var cancellation = new CancellationTokenSource();
         var item = CreateItem();
         IReadOnlyCollection<ItemEntity?> entities = new ItemEntity?[] { item };
-        IReadOnlyCollection<ItemDto> expected = new[]
-        {
-            CreateDto(item.Id, item.Name)
-        };
+        IReadOnlyCollection<ItemDto> expected = new[] { CreateDto(item.Id, item.Name) };
         var repository = new Mock<IItemLookupRepository>(MockBehavior.Strict);
-        repository.Setup(value => value.GetAllWithDetailsAsync(cancellation.Token))
-            .ReturnsAsync(entities);
+        repository.Setup(value => value.GetAllWithDetailsAsync(cancellation.Token)).ReturnsAsync(entities);
         var mapper = new Mock<IFranzMapper>(MockBehavior.Strict);
-        mapper.Setup(value => value.Map<IReadOnlyCollection<ItemEntity?>, IReadOnlyCollection<ItemDto>>(entities))
-            .Returns(expected);
+        mapper.Setup(value => value.Map<IReadOnlyCollection<ItemEntity?>, IReadOnlyCollection<ItemDto>>(entities)).Returns(expected);
         var handler = new GetAllItemsQueryHandler(repository.Object, mapper.Object);
 
         var result = await handler.Handle(new GetAllItemsQuery(), cancellation.Token);
@@ -46,8 +41,7 @@ public sealed class ItemLookupQueryHandlerTests
         var item = CreateItem();
         var expected = CreateDto(item.Id, item.Name);
         var repository = new Mock<IItemLookupRepository>(MockBehavior.Strict);
-        repository.Setup(value => value.GetByNameAsync("Gungnir", cancellation.Token))
-            .ReturnsAsync(item);
+        repository.Setup(value => value.GetByNameAsync("Gungnir", cancellation.Token)).ReturnsAsync(item);
         var mapper = new Mock<IFranzMapper>(MockBehavior.Strict);
         mapper.Setup(value => value.Map<ItemEntity, ItemDto>(item)).Returns(expected);
         var handler = new GetItemByNameQueryHandler(repository.Object, mapper.Object);
@@ -66,8 +60,7 @@ public sealed class ItemLookupQueryHandlerTests
     {
         using var cancellation = new CancellationTokenSource();
         var repository = new Mock<IItemLookupRepository>(MockBehavior.Strict);
-        repository.Setup(value => value.GetByNameAsync("Unknown Relic", cancellation.Token))
-            .ReturnsAsync((ItemEntity?)null);
+        repository.Setup(value => value.GetByNameAsync("Unknown Relic", cancellation.Token)).ReturnsAsync((ItemEntity?)null);
         var mapper = new Mock<IFranzMapper>(MockBehavior.Strict);
         var handler = new GetItemByNameQueryHandler(repository.Object, mapper.Object);
 
@@ -90,8 +83,7 @@ public sealed class ItemLookupQueryHandlerTests
         repository.Setup(value => value.GetByCategoryAsync(ItemCategory.Relic, 2, 5, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PagedResult<ItemEntity>(entities, 11, 2, 5));
         var mapper = new Mock<IFranzMapper>(MockBehavior.Strict);
-        mapper.Setup(value => value.Map<IReadOnlyList<ItemEntity>, IReadOnlyList<ItemDto>>(entities))
-            .Returns(expected);
+        mapper.Setup(value => value.Map<IReadOnlyList<ItemEntity>, IReadOnlyList<ItemDto>>(entities)).Returns(expected);
         var handler = new global::GetItemsByCategoryQueryHandler(repository.Object, mapper.Object);
 
         var result = await handler.Handle(new GetItemsByCategoryQuery(ItemCategory.Relic, 2, 5), CancellationToken.None);
@@ -113,8 +105,7 @@ public sealed class ItemLookupQueryHandlerTests
         repository.Setup(value => value.GetByClassAffinityAsync(ItemClass.Mage, 3, 7, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PagedResult<ItemEntity>(entities, 20, 3, 7));
         var mapper = new Mock<IFranzMapper>(MockBehavior.Strict);
-        mapper.Setup(value => value.Map<IReadOnlyList<ItemEntity>, IReadOnlyList<ItemDto>>(entities))
-            .Returns(expected);
+        mapper.Setup(value => value.Map<IReadOnlyList<ItemEntity>, IReadOnlyList<ItemDto>>(entities)).Returns(expected);
         var handler = new global::GetItemsByClassQueryHandler(repository.Object, mapper.Object);
 
         var result = await handler.Handle(new GetItemsByClassQuery(ItemClass.Mage, 3, 7), CancellationToken.None);
@@ -136,8 +127,7 @@ public sealed class ItemLookupQueryHandlerTests
         repository.Setup(value => value.GetByMythologyAsync(ItemMythology.Norse, 4, 9, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PagedResult<ItemEntity>(entities, 42, 4, 9));
         var mapper = new Mock<IFranzMapper>(MockBehavior.Strict);
-        mapper.Setup(value => value.Map<IReadOnlyList<ItemEntity>, IReadOnlyList<ItemDto>>(entities))
-            .Returns(expected);
+        mapper.Setup(value => value.Map<IReadOnlyList<ItemEntity>, IReadOnlyList<ItemDto>>(entities)).Returns(expected);
         var handler = new global::GetItemsByMythologyQueryHandler(repository.Object, mapper.Object);
 
         var result = await handler.Handle(new GetItemsByMythologyQuery(ItemMythology.Norse, 4, 9), CancellationToken.None);
@@ -154,12 +144,9 @@ public sealed class ItemLookupQueryHandlerTests
 
     private static ItemEntity CreateItem()
     {
-        var item = (ItemEntity)Activator.CreateInstance(
-            typeof(ItemEntity),
+        var item = (ItemEntity)Activator.CreateInstance(typeof(ItemEntity),
             BindingFlags.Instance | BindingFlags.NonPublic,
-            binder: null,
-            args: new object[] { Guid.NewGuid() },
-            culture: null)!;
+            binder: null, args: new object[] { Guid.NewGuid() }, culture: null)!;
         item.Define("Gungnir", ItemCategory.Relic, ItemMythology.Norse,
             ItemClass.Mage, null, null!, null, "unit-test");
         return item;
