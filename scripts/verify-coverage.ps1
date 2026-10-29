@@ -3,7 +3,7 @@ param(
     [string] $CoverageRoot,
 
     [Parameter(Mandatory = $false)]
-    [double] $MinimumLineRate = 0.29
+    [double] $MinimumLineRate = 0.34
 )
 
 $ErrorActionPreference = "Stop"
@@ -24,8 +24,8 @@ $candidates = foreach ($report in $reports) {
     $coveredClientLines = @($clientClass.SelectNodes("./lines/line") |
         Where-Object { [int] $_.GetAttribute("hits") -gt 0 }).Count
 
-    # The main application test run executes this production type. The
-    # architecture-report test assembly may reference it without executing it.
+    # Select the production test report, not an architectural-report assembly
+    # that may reference the client without executing it.
     if ($coveredClientLines -gt 0) {
         [pscustomobject] @{
             Path = $report.FullName
