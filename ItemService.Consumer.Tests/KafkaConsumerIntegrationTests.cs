@@ -1,4 +1,5 @@
 using Franz.Common.Messaging.Messages;
+using Franz.Common.Business.Domain;
 using ItemService.Consumer.Processing;
 using ItemService.Domain.Items.Core;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -35,9 +36,10 @@ public sealed class ConsumerContractTests
         var processor = typeof(GenericMessageProcessor<>);
         var parameter = Assert.Single(processor.GetGenericArguments());
 
-        Assert.Contains(parameter.GetGenericParameterConstraints(), constraint =>
-            constraint.Name == "IEntity" &&
-            constraint.IsInterface);
+        var constraint = Assert.Single(parameter.GetGenericParameterConstraints());
+
+        Assert.Equal(typeof(IEntity<>), constraint.GetGenericTypeDefinition());
+        Assert.Equal(typeof(Guid), Assert.Single(constraint.GetGenericArguments()));
     }
 
     [Fact]
@@ -55,6 +57,6 @@ public sealed class ConsumerContractTests
         var processor = new GenericMessageProcessor<ItemEntity>(
             NullLogger<GenericMessageProcessor<ItemEntity>>.Instance);
 
-        Assert.Throws<JsonReaderException>(() => processor.Process(new Message("{")));
+        Assert.Throws<JsonSerializationException>(() => processor.Process(new Message("{")));
     }
 }
