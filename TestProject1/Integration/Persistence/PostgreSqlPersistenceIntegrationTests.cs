@@ -32,8 +32,8 @@ public sealed class PostgreSqlPersistenceIntegrationTests
         var itemId = Guid.NewGuid();
         var stats = CreateStats();
         stats.Define(itemId,
-            new ItemHeroStatModifier(healthBonus: 125),
-            new ItemSkillStatModifier(damageBonus: 30),
+            new ItemHeroStatModifier(125, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null),
+            new ItemSkillStatModifier(null, null, 30, null, null, null, null, null, null),
             "integration-test");
 
         var condition = ItemBehaviouralCondition.ForPattern(new[] { 0, 5, 0 }, 4.5f, 2);
