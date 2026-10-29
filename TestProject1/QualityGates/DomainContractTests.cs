@@ -15,26 +15,20 @@ public sealed class DomainContractTests
     [Fact]
     public void PatternCondition_RequiresAtLeastTwoEffects()
     {
-        Assert.Throws<ArgumentException>(() =>
-            ItemBehaviouralCondition.ForPattern(Array.Empty<int>(), 4));
-        Assert.Throws<ArgumentException>(() =>
-            ItemBehaviouralCondition.ForPattern(new[] { 0 }, 4));
+        Assert.Throws<ArgumentException>(() => ItemBehaviouralCondition.ForPattern(Array.Empty<int>(), 4));
+        Assert.Throws<ArgumentException>(() => ItemBehaviouralCondition.ForPattern(new[] { 0 }, 4));
     }
 
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
-    public void PatternCondition_RequiresPositiveWindow(float windowSeconds)
-    {
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-            ItemBehaviouralCondition.ForPattern(new[] { 0, 5 }, windowSeconds));
-    }
+    public void PatternCondition_RequiresPositiveWindow(float windowSeconds) =>
+        Assert.Throws<ArgumentOutOfRangeException>(() => ItemBehaviouralCondition.ForPattern(new[] { 0, 5 }, windowSeconds));
 
     [Fact]
     public void PatternCondition_PreservesOrderAndWindow()
     {
         var condition = ItemBehaviouralCondition.ForPattern(new[] { 0, 5, 0 }, 4.5f, 2);
-
         Assert.Equal(new[] { 0, 5, 0 }, condition.Pattern);
         Assert.Equal(4.5f, condition.WindowSeconds);
         Assert.Equal(2, condition.StackThreshold);
@@ -45,17 +39,13 @@ public sealed class DomainContractTests
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
-    public void ConsecutiveCondition_RequiresAtLeastTwoOccurrences(int count)
-    {
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-            ItemBehaviouralCondition.ForConsecutive(0, count));
-    }
+    public void ConsecutiveCondition_RequiresAtLeastTwoOccurrences(int count) =>
+        Assert.Throws<ArgumentOutOfRangeException>(() => ItemBehaviouralCondition.ForConsecutive(0, count));
 
     [Fact]
     public void ConsecutiveCondition_PreservesEffectTypeAndCount()
     {
         var condition = ItemBehaviouralCondition.ForConsecutive(5, 3);
-
         Assert.Equal(5, condition.ConsecutiveEffectType);
         Assert.Equal(3, condition.ConsecutiveCount);
         Assert.Null(condition.Pattern);
@@ -68,18 +58,13 @@ public sealed class DomainContractTests
     [InlineData(1, 5)]
     [InlineData(3, 0)]
     [InlineData(3, -1)]
-    public void DiversityCondition_RequiresMultipleEffectsAndPositiveWindow(
-        int distinctEffectCount, float windowSeconds)
-    {
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-            ItemBehaviouralCondition.ForDiversity(distinctEffectCount, windowSeconds));
-    }
+    public void DiversityCondition_RequiresMultipleEffectsAndPositiveWindow(int count, float windowSeconds) =>
+        Assert.Throws<ArgumentOutOfRangeException>(() => ItemBehaviouralCondition.ForDiversity(count, windowSeconds));
 
     [Fact]
     public void DiversityCondition_PreservesCountAndWindow()
     {
         var condition = ItemBehaviouralCondition.ForDiversity(4, 6, 2);
-
         Assert.Equal(4, condition.DistinctEffectCount);
         Assert.Equal(6, condition.WindowSeconds);
         Assert.Equal(2, condition.StackThreshold);
@@ -93,7 +78,6 @@ public sealed class DomainContractTests
         var first = ItemBehaviouralCondition.ForPattern(new[] { 0, 5, 0 }, 4);
         var second = ItemBehaviouralCondition.ForPattern(new[] { 0, 5, 0 }, 4);
         var differentOrder = ItemBehaviouralCondition.ForPattern(new[] { 5, 0, 0 }, 4);
-
         Assert.Equal(first, second);
         Assert.NotEqual(first, differentOrder);
     }
@@ -101,12 +85,9 @@ public sealed class DomainContractTests
     [Fact]
     public void HeroAndSkillModifiersPreserveIndependentStatLayers()
     {
-        var hero = new ItemHeroStatModifier(
-            250, 100, 55, 12, 0.15f, 0.1f, 0.2f, 0.3f,
+        var hero = new ItemHeroStatModifier(250, 100, 55, 12, 0.15f, 0.1f, 0.2f, 0.3f,
             25, 15, 0.05f, 0.1f, 0.2f, 10, 0.15f, 1.5f);
-        var skill = new ItemSkillStatModifier(
-            0.2f, 0.1f, 40, 20, 15, 0.05f, 0.1f, 0.25f, 5);
-
+        var skill = new ItemSkillStatModifier(0.2f, 0.1f, 40, 20, 15, 0.05f, 0.1f, 0.25f, 5);
         Assert.Equal(250, hero.HealthBonus);
         Assert.Equal(55, hero.AttackDamageBonus);
         Assert.Equal(0.15f, hero.CooldownReductionBonus);
@@ -116,27 +97,23 @@ public sealed class DomainContractTests
     }
 
     [Fact]
-    public void ItemEntityRequiresNonBlankName()
+    public void ItemEntityExposesTheExpectedDefinitionContract()
     {
         var define = typeof(ItemEntity).GetMethod(nameof(ItemEntity.Define));
         Assert.NotNull(define);
-        var nameParameter = define!.GetParameters().Single(p => p.Name == "name");
-
-        Assert.Equal(typeof(string), nameParameter.ParameterType);
-        Assert.True(define.GetParameters().Any(p => p.Name == "baseStats"));
-        Assert.True(define.GetParameters().Any(p => p.Name == "createdBy"));
+        Assert.Equal(typeof(string), define!.GetParameters().Single(p => p.Name == "name").ParameterType);
+        Assert.Contains(define.GetParameters(), p => p.Name == "baseStats");
+        Assert.Contains(define.GetParameters(), p => p.Name == "createdBy");
     }
 
     [Fact]
     public void BehaviouralConditionIsADeclarativeDescriptorNotAnEvaluator()
     {
-        var methods = typeof(ItemBehaviouralCondition)
-            .GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-
+        var methods = typeof(ItemBehaviouralCondition).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
         Assert.DoesNotContain(methods, method =>
             method.Name.Contains("Evaluate", StringComparison.OrdinalIgnoreCase) ||
             method.Name.Contains("Execute", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(typeof(ItemBehaviouralCondition).GetProperty(nameof(ItemBehaviouralCondition.Pattern))!);
+        Assert.NotNull(typeof(ItemBehaviouralCondition).GetProperty(nameof(ItemBehaviouralCondition.Pattern)));
     }
 }
 
@@ -146,7 +123,6 @@ public sealed class ApiBoundaryContractTests
     public void ItemControllerIsAnApiControllerWithExplicitItemsRoute()
     {
         var type = typeof(ItemController);
-
         Assert.True(type.IsDefined(typeof(ApiControllerAttribute), inherit: true));
         Assert.Equal("items", type.GetCustomAttribute<RouteAttribute>()?.Template);
         Assert.True(typeof(ControllerBase).IsAssignableFrom(type));
@@ -165,20 +141,17 @@ public sealed class ApiBoundaryContractTests
     public void PublicEndpointsDeclareExpectedHttpVerb(string methodName, Type attributeType)
     {
         var method = typeof(ItemController).GetMethod(methodName);
-
         Assert.NotNull(method);
-        Assert.True(method!.IsDefined(attributeType, inherit: true),
-            $"{methodName} must declare {attributeType.Name}.");
+        Assert.True(method!.IsDefined(attributeType, inherit: true), $"{methodName} must declare {attributeType.Name}.");
     }
 
     [Fact]
-    public void UpdateStatsRejectsMismatchedRouteAndCommandIdsBeforeDispatch()
+    public void UpdateStatsUsesAnIdScopedRouteAndReceivesAnId()
     {
         var method = typeof(ItemController).GetMethod(nameof(ItemController.UpdateStats));
-
         Assert.NotNull(method);
         Assert.Equal(typeof(Guid), method!.GetParameters()[0].ParameterType);
-        Assert.Contains(method.GetCustomAttributes(typeof(HttpPutAttribute), true)
-            .Cast<HttpPutAttribute>(), attribute => attribute.Template == "{id:guid}/stats");
+        Assert.Contains(method.GetCustomAttributes(typeof(HttpPutAttribute), true).Cast<HttpPutAttribute>(),
+            attribute => attribute.Template == "{id:guid}/stats");
     }
 }
