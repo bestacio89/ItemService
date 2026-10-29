@@ -43,6 +43,9 @@ jobs:
           --logger "trx;LogFilePrefix=solution"
           --results-directory TestResults/Solution
 
+      - name: Enforce baseline application line coverage
+        run: pwsh ./scripts/verify-coverage.ps1 -CoverageRoot TestResults/Solution -MinimumLineRate 0.25
+
       - name: Restore Consumer tests from NuGet.org only
         run: dotnet restore ItemService.Consumer.Tests/ItemService.Consumer.Tests.csproj --source https://api.nuget.org/v3/index.json
 
