@@ -44,6 +44,10 @@
     <ProjectReference Include="..\sources\back\ItemService.Persistence\ItemService.Persistence.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\sources\back\ItemService.ClientHttp\ItemService.Client.Http.csproj" />
+  </ItemGroup>
+
 </Project>
 
 
