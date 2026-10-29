@@ -38,11 +38,14 @@ jobs:
           --logger "trx;LogFileName=solution-tests.trx"
           --results-directory TestResults/Solution
 
+      - name: Restore Consumer test project from NuGet.org
+        run: dotnet restore ItemService.Consumer.Tests/ItemService.Consumer.Tests.csproj --source https://api.nuget.org/v3/index.json
+
       - name: Test Consumer test project
         run: >-
           dotnet test ItemService.Consumer.Tests/ItemService.Consumer.Tests.csproj
           --configuration Release
-          --source https://api.nuget.org/v3/index.json
+          --no-restore
           --logger "trx;LogFileName=consumer-tests.trx"
           --results-directory TestResults/Consumer
 
