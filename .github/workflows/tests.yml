@@ -1,0 +1,77 @@
+name: ItemService Quality Gates
+
+on:
+  pull_request:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+
+concurrency:
+  group: itemservice-quality-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build, test, and collect coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out pull request
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore solution from NuGet.org only
+        run: dotnet restore ItemService.sln --source https://api.nuget.org/v3/index.json
+
+      - name: Build solution
+        run: dotnet build ItemService.sln --configuration Release --no-restore
+
+      - name: Test solution and collect coverage
+        run: >-
+          dotnet test ItemService.sln
+          --configuration Release
+          --no-build
+          --no-restore
+          --collect:"XPlat Code Coverage"
+          --logger "trx;LogFilePrefix=solution"
+          --results-directory TestResults/Solution
+
+      - name: Enforce application line coverage
+        run: pwsh ./scripts/verify-coverage.ps1 -CoverageRoot TestResults/Solution -MinimumLineRate 0.34
+
+      - name: Restore Consumer tests from NuGet.org only
+        run: dotnet restore ItemService.Consumer.Tests/ItemService.Consumer.Tests.csproj --source https://api.nuget.org/v3/index.json
+
+      - name: Build Consumer tests
+        run: dotnet build ItemService.Consumer.Tests/ItemService.Consumer.Tests.csproj --configuration Release --no-restore
+
+      - name: Test Consumer contracts and collect coverage
+        run: >-
+          dotnet test ItemService.Consumer.Tests/ItemService.Consumer.Tests.csproj
+          --configuration Release
+          --no-build
+          --no-restore
+          --collect:"XPlat Code Coverage"
+          --logger "trx;LogFilePrefix=consumer"
+          --results-directory TestResults/Consumer
+
+      - name: Enforce consumer processor line coverage
+        run: pwsh ./scripts/verify-consumer-coverage.ps1 -CoverageRoot TestResults/Consumer -MinimumLineRate 0.80
+
+      - name: Upload test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: itemservice-quality-reports
+          path: |
+            TestResults/**/*.trx
+            TestResults/**/coverage.cobertura.xml
+          if-no-files-found: warn
+          retention-days: 14

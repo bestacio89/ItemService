@@ -1,107 +1,78 @@
-using Confluent.Kafka;
-using Confluent.Kafka.Admin;
-using Franz.Common.Messaging;
-using Franz.Common.Messaging.Configuration;
-using Franz.Common.Messaging.Delegating;
 using Franz.Common.Messaging.Messages;
-using ItemService.Consumer.Services;
-using ItemService.Consumer.Tests.config;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using Franz.Common.Business.Domain;
+using ItemService.Consumer.Processing;
+using ItemService.Domain.Items.Core;
+using Microsoft.Extensions.Logging.Abstractions;
+using Newtonsoft.Json;
 
-namespace ItemService.Consumer.Tests
+namespace ItemService.Consumer.Tests;
+
+public sealed class ConsumerContractTests
 {
-  public class KafkaConsumerIntegrationTests : IAsyncLifetime
-  {
-    private readonly KafkaTestContainer _kafkaContainer;
-    private readonly string _topicName;
-
-    public KafkaConsumerIntegrationTests()
+    [Fact]
+    public void GenericProcessorImplementsTheDeclaredGenericContract()
     {
-      _kafkaContainer = new KafkaTestContainer();
-      _topicName = $"test-topic-{Guid.NewGuid()}";
+        var contract = typeof(IGenericMessageProcessor<>);
+        var implementedContracts = typeof(GenericMessageProcessor<>).GetInterfaces();
+
+        Assert.Contains(implementedContracts, implemented =>
+            implemented.IsGenericType &&
+            implemented.GetGenericTypeDefinition() == contract);
     }
 
-    public async Task InitializeAsync()
+    [Fact]
+    public void ProcessorAcceptsTheInstalledFranzMessageContract()
     {
-      await _kafkaContainer.StartAsync();
-      await CreateTopicAsync(_topicName);
+        var process = typeof(GenericMessageProcessor<>).GetMethod("Process");
+
+        Assert.NotNull(process);
+        Assert.Equal(typeof(void), process!.ReturnType);
+        Assert.Equal(new[] { typeof(Message) }, process.GetParameters().Select(parameter => parameter.ParameterType));
     }
 
-    public async Task DisposeAsync()
+    [Fact]
+    public void ProcessorIsGenericOverAnEntityContract()
     {
-      await _kafkaContainer.DisposeAsync();
+        var processor = typeof(GenericMessageProcessor<>);
+        var parameter = Assert.Single(processor.GetGenericArguments());
+
+        var constraint = Assert.Single(parameter.GetGenericParameterConstraints());
+
+        Assert.Equal(typeof(IEntity<>), constraint.GetGenericTypeDefinition());
+        Assert.Equal(typeof(Guid), Assert.Single(constraint.GetGenericArguments()));
     }
 
-    [Fact(Skip = "Skipped in CI environment")]
-    [Trait("Category", "Integration")]   // Ã°Å¸â€˜Ë† Mark this as Integration
-    public async Task KafkaConsumer_ShouldProcessMessage()
+    [Fact]
+    public void Process_DeserializesAndProcessesAnEntityPayload()
     {
-      // Arrange
-      var services = new ServiceCollection();
-      var messageProcessedEvent = new ManualResetEvent(false);
+        var processor = new GenericMessageProcessor<TestEntity>(
+            NullLogger<GenericMessageProcessor<TestEntity>>.Instance);
 
-      services.AddLogging();
-      services.AddSingleton<IMessageHandler>(provider =>
-          new TestMessageHandler(messageProcessedEvent));
-      services.AddSingleton<IHostedService, KafkaConsumerService>();
-      services.Configure<MessagingOptions>(options =>
-      {
-        options.BootStrapServers = _kafkaContainer.BootstrapServers;
-        options.GroupID = "test-consumer-group";
-      });
-
-      var serviceProvider = services.BuildServiceProvider();
-
-      // Act
-      var host = serviceProvider.GetRequiredService<IHostedService>() as KafkaConsumerService;
-
-      var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-      await host!.StartAsync(cancellationTokenSource.Token);
-
-      await ProduceMessageAsync(_topicName, "test-key", "{\"Id\":123,\"Name\":\"Test\"}");
-
-      Assert.True(messageProcessedEvent.WaitOne(TimeSpan.FromSeconds(5)),
-          "Message was not processed in time");
-
-      await host.StopAsync(cancellationTokenSource.Token);
+        processor.Process(new Message("""{"Name":"Valid Item"}"""));
     }
 
-    private async Task CreateTopicAsync(string topicName)
+    [Fact]
+    public void Process_HandlesJsonNullWithoutThrowing()
     {
-      var adminConfig = new AdminClientConfig { BootstrapServers = _kafkaContainer.BootstrapServers };
-      using var adminClient = new AdminClientBuilder(adminConfig).Build();
-      await adminClient.CreateTopicsAsync(new[]
-      {
-        new TopicSpecification { Name = topicName, NumPartitions = 1, ReplicationFactor = 1 }
-      });
+        var processor = new GenericMessageProcessor<ItemEntity>(
+            NullLogger<GenericMessageProcessor<ItemEntity>>.Instance);
+
+        processor.Process(new Message("null"));
     }
 
-    private async Task ProduceMessageAsync(string topicName, string key, string value)
+    private sealed class TestEntity : Entity<Guid>
     {
-      var producerConfig = new ProducerConfig { BootstrapServers = _kafkaContainer.BootstrapServers };
-      using var producer = new ProducerBuilder<string, string>(producerConfig).Build();
-      await producer.ProduceAsync(topicName,
-          new Message<string, string> { Key = key, Value = value });
+        public TestEntity() : base(Guid.NewGuid()) { }
+
+        public string Name { get; set; } = string.Empty;
     }
 
-    private class TestMessageHandler : IMessageHandler
+    [Fact]
+    public void Process_RethrowsMalformedJsonForRetryOrDeadLetterHandling()
     {
-      private readonly ManualResetEvent _messageProcessedEvent;
+        var processor = new GenericMessageProcessor<ItemEntity>(
+            NullLogger<GenericMessageProcessor<ItemEntity>>.Instance);
 
-      public TestMessageHandler(ManualResetEvent messageProcessedEvent)
-      {
-        _messageProcessedEvent = messageProcessedEvent;
-      }
-
-      public void Process(Message message)
-      {
-        Assert.Equal("{\"Id\":123,\"Name\":\"Test\"}", message.Body);
-        _messageProcessedEvent.Set();
-      }
+        Assert.Throws<JsonSerializationException>(() => processor.Process(new Message("{")));
     }
-  }
 }
-
-
-

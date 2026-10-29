@@ -5,7 +5,7 @@ using Franz.Common.Messaging.Messages;
 
 namespace ItemService.Consumer.Processing
 {
-  public interface IGenericMessageProcessor<T> where T : IEntity
+  public interface IGenericMessageProcessor<T> where T : IEntity<Guid>
   {
     void Process(Message message);
   }
